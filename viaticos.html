@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rendiciones — Granger S.A.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,600;0,700;0,800;0,900;1,800;1,900&display=swap" rel="stylesheet">
 <style>
 
   :root {
@@ -11,11 +14,12 @@
     --gray-200: #DDDDDD; --gray-400: #999999; --gray-600: #666666;
     --gray-800: #222222; --red: #C0392B; --red-light: #FDECEA;
     --white: #FFFFFF; --radius: 8px;
+    --orange: #F7941D; --cream: #F5F0E6;
     --shadow: 0 1px 4px rgba(0,0,0,0.08);
     --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--gray-50); color: var(--gray-800); min-height: 100vh; }
+  body { font-family: 'Poppins', 'Segoe UI', Arial, sans-serif; background: var(--cream); color: var(--gray-800); min-height: 100vh; }
   .app-header { background: #fff; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; border-bottom: 1.5px solid var(--gray-200); box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
   .app-header .logo { display: flex; align-items: center; gap: 14px; }
   .app-header .logo img { height: 38px; }
@@ -26,10 +30,10 @@
   .app-body { max-width: 960px; margin: 0 auto; padding: 28px 20px 60px; }
   .card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; margin-bottom: 20px; }
   .card-title { font-size: 15px; font-weight: 700; color: var(--black); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-  .card-title .icon { width: 28px; height: 28px; background: var(--black); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; }
+  .card-title .icon { width: 28px; height: 28px; background: var(--orange); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; }
   .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--gray-100); border-radius: var(--radius); padding: 4px; }
   .tab-btn { flex: 1; padding: 8px 12px; border: none; background: none; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--gray-600); cursor: pointer; transition: all 0.2s; }
-  .tab-btn.active { background: white; color: var(--black); box-shadow: var(--shadow); border-bottom: 2px solid var(--black); }
+  .tab-btn.active { background: white; color: var(--black); box-shadow: var(--shadow); border-bottom: 2px solid var(--orange); }
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
   .form-group { display: flex; flex-direction: column; gap: 5px; }
@@ -117,7 +121,7 @@
   .hero { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:48px 20px; }
   .hero-logo { margin-bottom:28px; }
   .hero-logo img { height:52px; width:auto; }
-  .hero h1 { font-size:26px; font-weight:800; color:var(--black); margin-bottom:8px; text-align:center; }
+  .hero h1 { font-family:'Poppins',sans-serif; font-style:italic; font-size:28px; font-weight:900; color:var(--black); margin-bottom:8px; text-align:center; }
   .hero p { font-size:14px; color:var(--gray-600); margin-bottom:40px; text-align:center; }
   .cards { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
   .option-card { background:white; border-radius:12px; box-shadow:var(--shadow-lg); padding:32px 28px; width:260px; text-align:center; cursor:pointer; transition:all 0.2s; border:2px solid transparent; display:flex; flex-direction:column; align-items:center; gap:12px; }
@@ -176,8 +180,8 @@
           <div class="form-group"><label>Titular</label>
             <select id="titularSelect" onchange="document.getElementById('titularNombre').value=this.value" style="">
               <option value="">— Seleccioná tu nombre —</option>
-              <option>Pablo Andr Rucci</option><option>Jonatan Claudi Rose</option><option>Carolina Anabel Roa</option>
-              <option>Rodrigo Yoel Sabena</option><option>Tomas Alej Giuliani</option><option>Maria Cecilia Ullua</option>
+              <option>Pablo Andr Rucci</option><option>Jonatan Claudi Rose</option>
+              <option>Rodrigo Yoel Sabena</option><option>Tomas Alej Giuliani</option>
               <option>Matias Navarro</option><option>Jose I. Lobos</option>
             </select>
             <input type="hidden" id="titularNombre">
@@ -287,6 +291,11 @@
             <div class="form-group"><label>Link de factura (opcional)</label><input type="text" id="vg_link" placeholder="https://..."></div>
           </div>
           <div class="form-group" style="margin-top:10px"><label>Comentarios</label><input type="text" id="vg_comentarios" placeholder="Ej: pagué por otro, adjunto transferencia"></div>
+          <div style="margin-top:12px;display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="vg_tienePropina" onchange="window.toggleVGPropina()">
+            <label style="text-transform:none;font-size:13px;font-weight:600;color:var(--gray-800)">¿Este gasto incluyó propina?</label>
+          </div>
+          <div class="form-group" id="vgPropinaWrap" style="display:none;margin-top:8px;max-width:220px"><label>Importe de la propina (ARS)</label><input type="text" inputmode="decimal" id="vg_importePropina" placeholder="0,00" oninput="formatARInput(this)"></div>
           <div style="margin-top:12px"><button class="btn btn-accent" onclick="agregarVGasto()">+ Agregar gasto</button></div>
         </div>
       </div>
@@ -367,6 +376,26 @@ function showToast(msg,type){const c=document.getElementById('toastContainer');c
 
 async function enviarEmail(titular,tipo,periodo,total,detalle){
   try{await emailjs.send("service_0mghs9h","oowdhr7",{titular,tipo,periodo,total,detalle,name:"Sistema Rendiciones Granger",time:new Date().toLocaleString('es-AR'),message:`Nueva rendición de ${titular} (${tipo}) por ${total}`,email:"yvaroli@grangernutricion.com"},"jf6Oi8cC6ByyRQ8SN");}catch(e){console.error('Email:',e);}
+}
+
+// ---- Responsables de sector (VIÁTICOS) ----
+// Cada responsable valida las rendiciones de viáticos de su gente. Para sumar otro
+// responsable, agregá un objeto más a este array (nombre, email y lista de empleados).
+const RESPONSABLES_VIATICOS = [
+  {nombre:'Rodrigo Sabena', email:'rsabena@grangernutricion.com', empleados:['Ignacio Bartizaghi','Julián Priotti','Maximiliano Longo','María Moyano','Gregorio Pontiggia','Lucia Griguoli']},
+  {nombre:'Matias Navarro', email:'mnavarro@grangernutricion.com', empleados:['Jonatan Rose','Yamila Varoli','Dana Sosa','Antonella Durando','Yazmin Sala','Elias Coria','Marcos Cauda']},
+  {nombre:'Nerina Aglieri', email:'naglieri@grangernutricion.com', empleados:['Ailen Valli','Fernando Imhoff','Kristal Pereyra Trimmel']},
+  {nombre:'Jose Lobos', email:'jlobos@grangernutricion.com', empleados:['Francisco Monje','Melina Barreto','Barbara Sejas']},
+];
+function normalizarNombre(str){
+  return String(str||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+}
+function buscarResponsableDeEmpleado(titular){
+  const t=normalizarNombre(titular);
+  return RESPONSABLES_VIATICOS.find(r=>r.empleados.some(e=>normalizarNombre(e)===t));
+}
+async function enviarEmailResponsable(resp,titular,periodo,total,detalle){
+  try{await emailjs.send("service_0mghs9h","oowdhr7",{titular,tipo:'Viáticos',periodo,total,detalle,name:"Sistema Rendiciones Granger",time:new Date().toLocaleString('es-AR'),message:`Tenés una rendición de viáticos pendiente de validar de ${titular} (${periodo}) por ${total}. Ingresá a la planilla de administración para revisarla.`,email:resp.email},"jf6Oi8cC6ByyRQ8SN");}catch(e){console.error('Email responsable:',e);}
 }
 
 window.elegirTipo=function(tipo){
@@ -480,6 +509,11 @@ function iniciarHistorial(){
 window.responder=async function(fbId){const texto=document.getElementById('resp_'+fbId).value.trim();if(!texto){showToast('Escribí tu respuesta','error');return;}try{await updateDoc(doc(db,'rendiciones',fbId),{respuestaTitular:texto});showToast('Respuesta enviada ✓','success');}catch(e){showToast('Error','error');}};
 
 // ---- VIATICOS ----
+window.toggleVGPropina=function(){
+  const chk=document.getElementById('vg_tienePropina').checked;
+  document.getElementById('vgPropinaWrap').style.display=chk?'':'none';
+  if(!chk)document.getElementById('vg_importePropina').value='';
+};
 window.agregarVGasto=function(){
   const fecha=document.getElementById('vg_fecha').value,concepto=document.getElementById('vg_concepto').value.trim(),
     importe=parseARNumber(document.getElementById('vg_importe').value),facturado=document.getElementById('vg_facturado').value,
@@ -488,10 +522,19 @@ window.agregarVGasto=function(){
   if(!fecha){showToast('Ingresá la fecha','error');return;}
   if(!concepto){showToast('Ingresá el concepto','error');return;}
   if(!importe||importe<=0){showToast('Ingresá un importe válido','error');return;}
+  const tienePropina=document.getElementById('vg_tienePropina').checked;
+  const importePropina=tienePropina?parseARNumber(document.getElementById('vg_importePropina').value):0;
+  if(tienePropina&&importePropina<=0){showToast('Ingresá el importe de la propina','error');return;}
   vGastos.push({id:Date.now(),fecha,concepto,importe,facturado,metodo,link,comentarios});
+  // Según el procedimiento de viáticos, la propina se carga como un gasto independiente con concepto "Propina".
+  if(tienePropina&&importePropina>0){
+    vGastos.push({id:Date.now()+1,fecha,concepto:'Propina',importe:importePropina,facturado,metodo,link:'',comentarios:`Propina sobre: ${concepto}`});
+  }
   renderVGastos();
-  ['vg_fecha','vg_concepto','vg_importe','vg_link','vg_comentarios'].forEach(id=>document.getElementById(id).value='');
-  showToast('Gasto agregado ✓','success');
+  ['vg_fecha','vg_concepto','vg_importe','vg_link','vg_comentarios','vg_importePropina'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('vg_tienePropina').checked=false;
+  document.getElementById('vgPropinaWrap').style.display='none';
+  showToast(tienePropina?'Gasto y propina agregados ✓':'Gasto agregado ✓','success');
 };
 window.eliminarVGasto=function(id){vGastos=vGastos.filter(g=>g.id!==id);renderVGastos();};
 function renderVGastos(){
@@ -518,6 +561,8 @@ window.enviarViatico=async function(){
     await addDoc(collection(db,'rendiciones'),{tipo:'viaticos',titular:nombre,area,fechasViaje:fechas,motivo,gastos:[...vGastos],km,valorKm,kmImporte,totalGastos:totalARS-kmImporte,totalARS,recibioEfectivo:recibioEfectivo==='Si',importeEfectivo,adjunto:vAttachedFile,obs,estado:'pendiente',fechaEnvio:new Date().toISOString(),comentarioAdmin:'',respuestaTitular:''});
     const detalle=vGastos.map(g=>`• ${formatDate(g.fecha)} — ${g.concepto}: $${fmt(g.importe)} (${g.metodo})`).join('\n')+(km>0?`\n• Kilometraje: ${km} km = $${fmt(kmImporte)}`:'' );
     await enviarEmail(nombre,'Viáticos',`${fechas} — ${motivo}`,'$'+fmt(totalARS),detalle);
+    const responsable=buscarResponsableDeEmpleado(nombre);
+    if(responsable)await enviarEmailResponsable(responsable,nombre,`${fechas} — ${motivo}`,'$'+fmt(totalARS),detalle);
     vGastos=[];vAttachedFile=null;renderVGastos();window.removeVFile();
     ['v_nombre','v_fechas','v_motivo','vObs','v_km','v_importeEfectivo'].forEach(id=>document.getElementById(id).value='');document.getElementById('v_area').value='';document.getElementById('v_recibioEfectivo').value='No';document.getElementById('vEfectivoImporteWrap').style.display='none';document.getElementById('kmResult').style.display='none';
     showToast('Rendición enviada ✓','success');

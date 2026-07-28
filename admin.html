@@ -4,17 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Administración — Granger S.A.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,600;0,700;0,800;0,900;1,800;1,900&display=swap" rel="stylesheet">
 <style>
   :root {
     --black: #1A1A1A; --gray-50: #F8F8F8; --gray-100: #EEEEEE;
     --gray-200: #DDDDDD; --gray-400: #999999; --gray-600: #666666;
     --gray-800: #222222; --red: #C0392B; --red-light: #FDECEA;
     --white: #FFFFFF; --radius: 8px;
+    --orange: #F7941D; --cream: #F5F0E6;
     --shadow: 0 1px 4px rgba(0,0,0,0.08);
     --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--gray-50); color: var(--gray-800); min-height: 100vh; }
+  body { font-family: 'Poppins', 'Segoe UI', Arial, sans-serif; background: var(--cream); color: var(--gray-800); min-height: 100vh; }
   .app-header { background: #fff; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; border-bottom: 1.5px solid var(--gray-200); box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
   .app-header .logo { display: flex; align-items: center; gap: 14px; }
   .app-header .logo img { height: 38px; }
@@ -25,10 +29,10 @@
   .app-body { max-width: 960px; margin: 0 auto; padding: 28px 20px 60px; }
   .card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; margin-bottom: 20px; }
   .card-title { font-size: 15px; font-weight: 700; color: var(--black); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-  .card-title .icon { width: 28px; height: 28px; background: var(--black); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; }
+  .card-title .icon { width: 28px; height: 28px; background: var(--orange); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; }
   .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--gray-100); border-radius: var(--radius); padding: 4px; }
   .tab-btn { flex: 1; padding: 8px 12px; border: none; background: none; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--gray-600); cursor: pointer; transition: all 0.2s; }
-  .tab-btn.active { background: white; color: var(--black); box-shadow: var(--shadow); border-bottom: 2px solid var(--black); }
+  .tab-btn.active { background: white; color: var(--black); box-shadow: var(--shadow); border-bottom: 2px solid var(--orange); }
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
   .form-group { display: flex; flex-direction: column; gap: 5px; }
@@ -76,7 +80,7 @@
   .rendicion-card:hover { box-shadow: var(--shadow-lg); }
   .rendicion-card-header { padding: 16px 20px; display: flex; align-items: center; gap: 14px; cursor: pointer; border-bottom: 1.5px solid transparent; }
   .rendicion-card-header:hover, .rendicion-card-header.expanded { border-bottom-color: var(--gray-100); }
-  .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--black); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: white; flex-shrink: 0; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--orange); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: white; flex-shrink: 0; }
   .rendicion-info { flex: 1; }
   .rendicion-info .name { font-size: 14px; font-weight: 700; color: var(--black); }
   .rendicion-info .meta { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
@@ -126,7 +130,15 @@
   .summary-box .s-label { font-size:11px; font-weight:700; color:var(--gray-400); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:6px; }
   .summary-box .s-value { font-size:20px; font-weight:800; color:var(--black); }
   .summary-box .s-sub { font-size:12px; color:var(--gray-400); margin-top:2px; }
+.access-bar { background:white; border-radius:var(--radius); box-shadow:var(--shadow); padding:14px 18px; margin-bottom:20px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:13px; }
+  .access-bar .access-label { font-weight:700; color:var(--gray-600); }
+  .access-bar select, .access-bar input { padding:7px 10px; font-size:13px; }
+  .access-bar .access-tag { background:var(--gray-100); border-radius:20px; padding:4px 12px; font-weight:700; }
+  .access-bar a.access-link { color:var(--red); font-weight:600; cursor:pointer; text-decoration:underline; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 <header class="app-header">
@@ -138,6 +150,8 @@
 </header>
 
 <div class="app-body">
+  <div id="accessBar"></div>
+  <div id="mainContent" style="display:none">
   <div class="tabs">
     <button class="tab-btn active" onclick="switchAdminTab('rendiciones',this)">Rendiciones</button>
     <button class="tab-btn" onclick="switchAdminTab('reporte',this)">📊 Reporte</button>
@@ -160,8 +174,8 @@
         </select>
         <select id="filtroTitular" onchange="renderAdmin()" style="padding:7px 12px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:13px;background:white">
           <option value="">Todos los titulares</option>
-          <option>Pablo Andr Rucci</option><option>Jonatan Claudi Rose</option><option>Carolina Anabel Roa</option>
-          <option>Rodrigo Yoel Sabena</option><option>Tomas Alej Giuliani</option><option>Maria Cecilia Ullua</option>
+          <option>Pablo Andr Rucci</option><option>Jonatan Claudi Rose</option>
+          <option>Rodrigo Yoel Sabena</option><option>Tomas Alej Giuliani</option>
           <option>Matias Navarro</option><option>Jose I. Lobos</option>
         </select>
       </div>
@@ -198,15 +212,17 @@
           <label>Persona</label>
           <select id="rTitular" onchange="generarReporte()" style="padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:13px;background:white">
             <option value="">Todas</option>
-            <option>Pablo Andr Rucci</option><option>Jonatan Claudi Rose</option><option>Carolina Anabel Roa</option>
-            <option>Rodrigo Yoel Sabena</option><option>Tomas Alej Giuliani</option><option>Maria Cecilia Ullua</option>
+            <option>Pablo Andr Rucci</option><option>Jonatan Claudi Rose</option>
+            <option>Rodrigo Yoel Sabena</option><option>Tomas Alej Giuliani</option>
             <option>Matias Navarro</option><option>Jose I. Lobos</option>
           </select>
         </div>
         <button class="btn btn-primary" onclick="exportarCSV()">⬇ Exportar CSV</button>
+        <button class="btn btn-ghost" onclick="exportarDetalleCSV()">⬇ Exportar detalle (por gasto)</button>
       </div>
     </div>
     <div id="reporteContent"></div>
+  </div>
   </div>
 </div>
 
@@ -230,6 +246,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
 import { getFirestore, collection, doc, updateDoc, deleteDoc, orderBy, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
 
+emailjs.init("jf6Oi8cC6ByyRQ8SN");
+
 const firebaseConfig = {
   apiKey: "AIzaSyCFHIU_4O-NiwFccMqZafLbRWndXmMBjX8",
   authDomain: "rendicion-gastos-6a46c.firebaseapp.com",
@@ -242,6 +260,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 let todasRendiciones=[], expandedId=null, consultaTargetId=null;
+let seleccionadosPDF=new Set();
 
 function fmt(n){return Number(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function formatDate(str){if(!str)return'';const[y,m,d]=str.split('-');return `${d}/${m}/${y}`;}
@@ -249,6 +268,95 @@ function formatDatetime(iso){const d=new Date(iso);return d.toLocaleDateString('
 function formatFileSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB';}
 function badgeHTML(estado){const map={'pendiente':['badge-pending','● Pendiente'],'aprobado':['badge-approved','● Aprobado'],'con consulta':['badge-consulta','● Con consulta']};const[cls,label]=map[estado]||['badge-pending',estado];return `<span class="badge ${cls}">${label}</span>`;}
 function showToast(msg,type){const c=document.getElementById('toastContainer');const t=document.createElement('div');t.className='toast '+(type||'');t.textContent=msg;c.appendChild(t);setTimeout(()=>t.remove(),3200);}
+
+// ---- Responsables de sector (VIÁTICOS) ----
+// Cada responsable valida solo las rendiciones de viáticos de su gente.
+// Para sumar otro responsable, agregá un objeto más (nombre, email, clave y empleados a cargo).
+const RESPONSABLES_VIATICOS = [
+  {nombre:'Rodrigo Sabena', email:'rsabena@grangernutricion.com', clave:'5734', empleados:['Ignacio Bartizaghi','Julián Priotti','Maximiliano Longo','María Moyano','Gregorio Pontiggia','Lucia Griguoli']},
+  {nombre:'Matias Navarro', email:'mnavarro@grangernutricion.com', clave:'6183', empleados:['Jonatan Rose','Yamila Varoli','Dana Sosa','Antonella Durando','Yazmin Sala','Elias Coria','Marcos Cauda']},
+  {nombre:'Nerina Aglieri', email:'naglieri@grangernutricion.com', clave:'2947', empleados:['Ailen Valli','Fernando Imhoff','Kristal Pereyra Trimmel']},
+  {nombre:'Jose Lobos', email:'jlobos@grangernutricion.com', clave:'8412', empleados:['Francisco Monje','Melina Barreto','Barbara Sejas']},
+];
+const ADMIN_CLAVE = '9021'; // clave maestra de Administración (acceso total)
+function normalizarNombre(str){
+  return String(str||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+}
+async function enviarEmailAprobacion(r){
+  const total=r.tipo==='tarjeta'?('ARS $'+fmt(r.totalARS)+(r.totalUSD>0?' + USD '+fmt(r.totalUSD):'')):('$'+fmt(r.totalARS));
+  const periodo=r.tipo==='tarjeta'?r.periodo:`${r.fechasViaje} — ${r.motivo}`;
+  try{await emailjs.send("service_0mghs9h","oowdhr7",{titular:r.titular,tipo:r.tipo==='tarjeta'?'Tarjeta Corporativa':'Viáticos',periodo,total,detalle:'',name:"Sistema Rendiciones Granger",time:new Date().toLocaleString('es-AR'),message:`La rendición de ${r.titular} (${periodo}) por ${total} fue aprobada.`,email:"yvaroli@grangernutricion.com"},"jf6Oi8cC6ByyRQ8SN");}catch(e){console.error('Email aprobación:',e);}
+}
+
+let responsableActivo=null, adminActivo=false;
+try{
+  const saved=JSON.parse(localStorage.getItem('sesionAdmin')||'null');
+  if(saved){
+    if(saved.tipo==='admin')adminActivo=true;
+    else if(saved.tipo==='responsable')responsableActivo=saved.resp;
+  }
+}catch(e){}
+
+function empleadosNormalizados(resp){return (resp.empleados||[]).map(normalizarNombre);}
+function sesionActiva(){return adminActivo||!!responsableActivo;}
+function actualizarVisibilidadContenido(){document.getElementById('mainContent').style.display=sesionActiva()?'':'none';}
+
+window.renderAccessBar=function(){
+  const bar=document.getElementById('accessBar');
+  actualizarVisibilidadContenido();
+  if(adminActivo){
+    bar.innerHTML=`<div class="access-bar">
+      <span class="access-label">Administración</span>
+      <span style="color:var(--gray-400)">— acceso total</span>
+      <span style="flex:1"></span>
+      <a class="access-link" onclick="salirSesion()">Salir</a>
+    </div>`;
+  }else if(responsableActivo){
+    bar.innerHTML=`<div class="access-bar">
+      <span class="access-label">Viendo como:</span>
+      <span class="access-tag">${responsableActivo.nombre}</span>
+      <span style="color:var(--gray-400)">— solo tus rendiciones de viáticos</span>
+      <span style="flex:1"></span>
+      <a class="access-link" onclick="salirSesion()">Salir</a>
+    </div>`;
+  }else{
+    const opciones=RESPONSABLES_VIATICOS.map(r=>`<option value="${r.nombre}">${r.nombre}</option>`).join('');
+    bar.innerHTML=`<div class="access-bar">
+      <span class="access-label">Ingresá para ver las rendiciones</span>
+      <select id="accLoginNombre"><option value="">— Elegí tu nombre —</option><option value="__admin__">Administración</option>${opciones}</select>
+      <input type="password" id="accLoginClave" placeholder="Clave" style="width:100px">
+      <button class="btn btn-sm btn-primary" onclick="entrarResponsable()">Ingresar</button>
+    </div>`;
+  }
+};
+window.entrarResponsable=function(){
+  const nombre=document.getElementById('accLoginNombre').value;
+  const clave=document.getElementById('accLoginClave').value;
+  if(!nombre){showToast('Elegí tu nombre','error');return;}
+  if(nombre==='__admin__'){
+    if(clave!==ADMIN_CLAVE){showToast('Clave incorrecta','error');return;}
+    adminActivo=true;responsableActivo=null;
+    localStorage.setItem('sesionAdmin',JSON.stringify({tipo:'admin'}));
+    renderAccessBar();renderAdmin();
+    showToast('Ingresaste como Administración','success');
+    return;
+  }
+  const resp=RESPONSABLES_VIATICOS.find(r=>r.nombre===nombre);
+  if(!resp){showToast('Elegí tu nombre','error');return;}
+  if(clave!==resp.clave){showToast('Clave incorrecta','error');return;}
+  adminActivo=false;responsableActivo=resp;
+  localStorage.setItem('sesionAdmin',JSON.stringify({tipo:'responsable',resp}));
+  document.getElementById('filtroTipo').value='viaticos';
+  renderAccessBar();
+  renderAdmin();
+  showToast('Ingresaste como '+resp.nombre,'success');
+};
+window.salirSesion=function(){
+  adminActivo=false;responsableActivo=null;
+  localStorage.removeItem('sesionAdmin');
+  renderAccessBar();
+  renderAdmin();
+};
 
 function adjuntoHTML(r){
   if(!r.adjunto)return'<span style="color:var(--gray-400)">Sin adjunto</span>';
@@ -275,6 +383,7 @@ window.switchAdminTab=function(tab,btn){
   if(tab==='reporte')generarReporte();
 };
 
+renderAccessBar();
 const q=query(collection(db,'rendiciones'),orderBy('fechaEnvio','desc'));
 onSnapshot(q,(snap)=>{
   todasRendiciones=snap.docs.map(d=>{const data=d.data();return{fbId:d.id,...data};});
@@ -283,10 +392,16 @@ onSnapshot(q,(snap)=>{
 });
 
 window.renderAdmin=function(){
+  actualizarVisibilidadContenido();
+  if(!sesionActiva())return;
   const filtroE=document.getElementById('filtroEstado').value;
   const filtroT=document.getElementById('filtroTitular').value;
   const filtroTipo=document.getElementById('filtroTipo').value;
   let filtradas=todasRendiciones;
+  if(responsableActivo){
+    const empN=empleadosNormalizados(responsableActivo);
+    filtradas=filtradas.filter(r=>r.tipo==='viaticos'&&empN.includes(normalizarNombre(r.titular)));
+  }
   if(filtroTipo)filtradas=filtradas.filter(r=>r.tipo===filtroTipo);
   if(filtroE)filtradas=filtradas.filter(r=>r.estado===filtroE);
   if(filtroT)filtradas=filtradas.filter(r=>r.titular===filtroT);
@@ -349,6 +464,7 @@ window.renderAdmin=function(){
         <div class="action-bar">
           ${r.estado!=='aprobado'?`<button class="btn btn-approve btn-sm" onclick="aprobar('${r.fbId}')">✓ Aprobar</button>`:'<span style="font-size:13px;font-weight:600;color:#555">✓ Aprobada</span>'}
           ${r.estado!=='aprobado'?`<button class="btn btn-sm btn-ghost" onclick="abrirConsulta('${r.fbId}')">💬 Enviar consulta</button>`:''}
+          <button class="btn btn-sm btn-ghost" onclick="descargarPDFPorId('${r.fbId}')">📄 PDF</button>
           <span style="flex:1"></span>
           <button class="btn btn-sm" style="background:var(--red-light);color:var(--red);border:1.5px solid var(--red)" onclick="eliminar('${r.fbId}')">🗑 Eliminar</button>
         </div>
@@ -358,7 +474,15 @@ window.renderAdmin=function(){
 };
 
 window.toggleExpand=function(id){expandedId=expandedId===id?null:id;renderAdmin();};
-window.aprobar=async function(fbId){try{await updateDoc(doc(db,'rendiciones',fbId),{estado:'aprobado'});showToast('Aprobada ✓','success');}catch(e){showToast('Error','error');}};
+window.aprobar=async function(fbId){
+  const r=todasRendiciones.find(x=>x.fbId===fbId);
+  if(responsableActivo&&r){
+    const empN=empleadosNormalizados(responsableActivo);
+    if(r.tipo!=='viaticos'||!empN.includes(normalizarNombre(r.titular))){showToast('No podés aprobar esta rendición','error');return;}
+  }
+  const aprobadoPor=responsableActivo?responsableActivo.nombre:'Administración';
+  try{await updateDoc(doc(db,'rendiciones',fbId),{estado:'aprobado',aprobadoPor,fechaAprobacion:new Date().toISOString()});showToast('Aprobada ✓','success');if(r)await enviarEmailAprobacion(r);}catch(e){showToast('Error','error');}
+};
 window.abrirConsulta=function(fbId){consultaTargetId=fbId;document.getElementById('consultaTexto').value='';document.getElementById('modalConsulta').classList.add('open');};
 window.closeModal=function(){document.getElementById('modalConsulta').classList.remove('open');consultaTargetId=null;};
 window.confirmarConsulta=async function(){
@@ -372,11 +496,19 @@ window.eliminar=async function(fbId){
 };
 
 // ---- REPORTE ----
+function datosBaseVisibles(){
+  if(responsableActivo){
+    const empN=empleadosNormalizados(responsableActivo);
+    return todasRendiciones.filter(r=>r.tipo==='viaticos'&&empN.includes(normalizarNombre(r.titular)));
+  }
+  return todasRendiciones;
+}
+
 window.generarReporte=function(){
   const tipo=document.getElementById('rTipo').value;
   const estado=document.getElementById('rEstado').value;
   const titular=document.getElementById('rTitular').value;
-  let datos=todasRendiciones;
+  let datos=datosBaseVisibles();
   if(tipo)datos=datos.filter(r=>r.tipo===tipo);
   if(estado)datos=datos.filter(r=>r.estado===estado);
   if(titular)datos=datos.filter(r=>r.titular===titular);
@@ -416,11 +548,15 @@ window.generarReporte=function(){
     </div>
 
     <div class="report-section">
-      <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--black)">Detalle de rendiciones</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:14px;font-weight:700;color:var(--black)">Detalle de rendiciones</div>
+        <button class="btn btn-sm btn-primary" onclick="exportarPDFsSeleccionados()">📄 Descargar PDF de seleccionadas</button>
+      </div>
       <table class="report-table">
-        <thead><tr><th>Fecha</th><th>Persona</th><th>Tipo</th><th>Período / Viaje</th><th>Estado</th><th style="text-align:right">Total ARS</th><th style="text-align:right">Total USD</th></tr></thead>
+        <thead><tr><th style="width:30px"><input type="checkbox" id="chkTodasPDF" onchange="toggleTodasPDF(this)"></th><th>Fecha</th><th>Persona</th><th>Tipo</th><th>Período / Viaje</th><th>Estado</th><th style="text-align:right">Total ARS</th><th style="text-align:right">Total USD</th></tr></thead>
         <tbody>
           ${datos.map(r=>`<tr>
+            <td><input type="checkbox" class="chkPDF" value="${r.fbId}" ${seleccionadosPDF.has(r.fbId)?'checked':''} onchange="togglePDFId('${r.fbId}',this.checked)"></td>
             <td style="font-size:12px;color:var(--gray-600)">${new Date(r.fechaEnvio).toLocaleDateString('es-AR')}</td>
             <td style="font-weight:600">${r.titular}</td>
             <td>${r.tipo==='tarjeta'?'💳 Tarjeta':'🧳 Viáticos'}</td>
@@ -439,7 +575,7 @@ window.exportarCSV=function(){
   const tipo=document.getElementById('rTipo').value;
   const estado=document.getElementById('rEstado').value;
   const titular=document.getElementById('rTitular').value;
-  let datos=todasRendiciones;
+  let datos=datosBaseVisibles();
   if(tipo)datos=datos.filter(r=>r.tipo===tipo);
   if(estado)datos=datos.filter(r=>r.estado===estado);
   if(titular)datos=datos.filter(r=>r.titular===titular);
@@ -466,6 +602,112 @@ window.exportarCSV=function(){
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
   showToast('CSV exportado ✓','success');
+};
+
+window.descargarPDFPorId=function(fbId){const r=todasRendiciones.find(x=>x.fbId===fbId);if(!r){showToast('No se encontró la rendición','error');return;}window.generarPDFRendicion(r);};
+window.generarPDFRendicion=function(r){
+  const {jsPDF}=window.jspdf;
+  const docu=new jsPDF({unit:'pt',format:'a4'});
+  const margin=40; let y=48;
+  docu.setFont('helvetica','bold');docu.setFontSize(16);
+  docu.text('Granger S.A. — Rendición de Gastos',margin,y); y+=22;
+  docu.setFontSize(11);docu.setFont('helvetica','normal');
+  docu.text(r.tipo==='tarjeta'?'Tarjeta Corporativa':'Viáticos',margin,y); y+=20;
+
+  docu.setFontSize(10);
+  const info=[
+    ['Titular',r.titular],
+    r.tipo==='viaticos'?['Área',r.area||'—']:['Período',r.periodo||'—'],
+    r.tipo==='viaticos'?['Fechas de viaje',r.fechasViaje||'—']:null,
+    r.tipo==='viaticos'?['Motivo',r.motivo||'—']:null,
+    ['Fecha de envío',formatDatetime(r.fechaEnvio)],
+  ].filter(Boolean);
+  info.forEach(([k,v])=>{docu.setFont('helvetica','bold');docu.text(k+':',margin,y);docu.setFont('helvetica','normal');docu.text(String(v),margin+110,y);y+=16;});
+  y+=6;
+
+  // Estado / validación
+  const estadoLabel={'pendiente':'PENDIENTE','aprobado':'APROBADA','con consulta':'CON CONSULTA'}[r.estado]||r.estado.toUpperCase();
+  docu.setFont('helvetica','bold');docu.setFontSize(12);docu.text('Estado: '+estadoLabel,margin,y);y+=18;
+  docu.setFont('helvetica','normal');docu.setFontSize(10);
+  if(r.estado==='aprobado'){
+    docu.text(`Validado por: ${r.aprobadoPor||'Administración'}${r.fechaAprobacion?' — '+formatDatetime(r.fechaAprobacion):''}`,margin,y);y+=16;
+  }
+  if(r.tipo==='viaticos'){
+    docu.text(`¿Recibió efectivo?: ${r.recibioEfectivo?'Sí — $'+fmt(r.importeEfectivo||0):'No'}`,margin,y);y+=16;
+  }
+  if(r.comentarioAdmin){
+    docu.text('Consulta: '+r.comentarioAdmin,margin,y,{maxWidth:515});y+=16;
+    if(r.respuestaTitular){docu.text('Respuesta: '+r.respuestaTitular,margin,y,{maxWidth:515});y+=16;}
+  }
+  y+=8;
+
+  // Tabla de gastos
+  let head,bodyRows;
+  if(r.tipo==='tarjeta'){
+    head=[['Fecha','Descripción','Categoría','Comprobante','Importe']];
+    bodyRows=(r.gastos||[]).map(g=>[formatDate(g.fecha),g.desc||'',g.categoria||'',g.factura||'',(g.moneda==='ARS'?'$':'USD ')+fmt(g.importe||0)]);
+  }else{
+    head=[['Fecha','Concepto','Facturado a','Método','Comentarios','Importe']];
+    bodyRows=(r.gastos||[]).map(g=>[formatDate(g.fecha),g.concepto||'',g.facturado||'',g.metodo==='REINTEGRO'?'Reintegro':'Adelanto',g.comentarios||'—','$'+fmt(g.importe||0)]);
+    if(r.km>0)bodyRows.push(['','Kilometraje ('+r.km+' km × $'+r.valorKm+')','','','','$'+fmt(r.kmImporte||0)]);
+  }
+  docu.autoTable({startY:y,margin:{left:margin,right:margin},head,body:bodyRows,styles:{fontSize:9,cellPadding:5},headStyles:{fillColor:[26,26,26]}});
+  let finalY=(docu.lastAutoTable&&docu.lastAutoTable.finalY)?docu.lastAutoTable.finalY+24:y+40;
+
+  docu.setFont('helvetica','bold');docu.setFontSize(12);
+  const totalTxt='TOTAL: $'+fmt(r.totalARS||0)+((r.totalUSD||0)>0?'  +  USD '+fmt(r.totalUSD):'');
+  docu.text(totalTxt,margin,finalY);
+
+  const nombreArchivo=(r.titular||'rendicion').replace(/[^\w]+/g,'_')+'_'+(r.tipo||'')+'_'+r.fbId.slice(0,6)+'.pdf';
+  docu.save(nombreArchivo);
+};
+
+window.togglePDFId=function(fbId,checked){
+  if(checked)seleccionadosPDF.add(fbId);else seleccionadosPDF.delete(fbId);
+};
+window.toggleTodasPDF=function(chk){
+  document.querySelectorAll('.chkPDF').forEach(c=>{c.checked=chk.checked;window.togglePDFId(c.value,chk.checked);});
+};
+window.exportarPDFsSeleccionados=function(){
+  const datos=datosBaseVisibles().filter(r=>seleccionadosPDF.has(r.fbId));
+  if(!datos.length){showToast('Marcá al menos una rendición','error');return;}
+  datos.forEach((r,i)=>setTimeout(()=>window.generarPDFRendicion(r),i*350));
+  showToast(`Generando ${datos.length} PDF(s)…`,'success');
+};
+
+window.exportarDetalleCSV=function(){
+  const tipo=document.getElementById('rTipo').value;
+  const estado=document.getElementById('rEstado').value;
+  const titular=document.getElementById('rTitular').value;
+  let datos=datosBaseVisibles();
+  if(tipo)datos=datos.filter(r=>r.tipo===tipo);
+  if(estado)datos=datos.filter(r=>r.estado===estado);
+  if(titular)datos=datos.filter(r=>r.titular===titular);
+
+  const rows=[['Fecha envío','Titular','Tipo','Área','Fechas de viaje / Período','Motivo','Estado','Fecha gasto','Concepto/Descripción','Facturado a','Categoría','Comprobante','Método','Comentarios','Importe','Moneda','Recibió efectivo','Importe efectivo','Link factura']];
+  datos.forEach(r=>{
+    const fechaEnvio=new Date(r.fechaEnvio).toLocaleDateString('es-AR');
+    const base=[fechaEnvio,r.titular,r.tipo==='tarjeta'?'Tarjeta Corporativa':'Viáticos',r.area||'',r.tipo==='tarjeta'?(r.periodo||''):(r.fechasViaje||''),r.tipo==='tarjeta'?'':(r.motivo||''),r.estado];
+    (r.gastos||[]).forEach(g=>{
+      if(r.tipo==='tarjeta'){
+        rows.push([...base,formatDate(g.fecha),g.desc||'',g.moneda==='ARS'?'ARS':'USD',g.categoria||'',g.factura||'','','',g.obs||'',(g.importe||0).toFixed(2).replace('.',','),g.moneda||'ARS','','',g.link||'']);
+      }else{
+        rows.push([...base,formatDate(g.fecha),g.concepto||'',g.facturado||'','',g.factura||'',g.metodo==='REINTEGRO'?'Reintegro':'Adelanto empresa',g.comentarios||'',(g.importe||0).toFixed(2).replace('.',','),'ARS',r.recibioEfectivo?'Sí':'No',r.recibioEfectivo?(r.importeEfectivo||0).toFixed(2).replace('.',','):'',g.link||'']);
+      }
+    });
+    if(r.tipo==='viaticos'&&r.km>0){
+      rows.push([...base,'','Kilometraje ('+r.km+' km × $'+r.valorKm+')','','','','','',(r.kmImporte||0).toFixed(2).replace('.',','),'ARS',r.recibioEfectivo?'Sí':'No',r.recibioEfectivo?(r.importeEfectivo||0).toFixed(2).replace('.',','):'','']);
+    }
+  });
+
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='detalle_gastos_rendiciones_granger.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Detalle exportado ✓','success');
 };
 </script>
 </body>
