@@ -178,7 +178,7 @@
         <div class="card-title"><div class="icon">👤</div> Datos</div>
         <div class="form-grid">
           <div class="form-group"><label>Titular</label>
-            <select id="titularSelect" onchange="document.getElementById('titularNombre').value=this.value" style="">
+            <select id="titularSelect" onchange="document.getElementById('titularNombre').value=this.value;localStorage.setItem('ultimoTitular',this.value);" style="">
               <option value="">— Seleccioná tu nombre —</option>
               <option>Pablo Andr Rucci</option><option>Jonatan Claudi Rose</option>
               <option>Rodrigo Yoel Sabena</option><option>Tomas Alej Giuliani</option>
@@ -241,7 +241,18 @@
         <button class="btn btn-primary" id="btnEnviar" onclick="enviarRendicion()">✓ Enviar rendición</button>
       </div>
     </div>
-    <div id="t-historial" style="display:none"><div id="historialContainer"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></div></div>
+    <div id="t-historial" style="display:none">
+      <div class="form-group" style="max-width:280px;margin-bottom:16px">
+        <label>Titular</label>
+        <select id="titularHistorialSelect" onchange="window.onCambiarTitularHistorial()">
+          <option value="">— Seleccioná tu nombre —</option>
+          <option>Pablo Andr Rucci</option><option>Jonatan Claudi Rose</option>
+          <option>Rodrigo Yoel Sabena</option><option>Tomas Alej Giuliani</option>
+          <option>Matias Navarro</option><option>Jose I. Lobos</option>
+        </select>
+      </div>
+      <div id="historialContainer"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></div>
+    </div>
   </div>
 </div>
 
@@ -422,7 +433,11 @@ window.switchTab=function(tab,btn){
   document.querySelectorAll('#viewTarjeta .tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
   document.getElementById('t-nueva').style.display=tab==='t-nueva'?'':'none';
   document.getElementById('t-historial').style.display=tab==='t-historial'?'':'none';
-  if(tab==='t-historial')iniciarHistorial();
+  if(tab==='t-historial'){
+    const sel=document.getElementById('titularHistorialSelect');
+    if(!sel.value)sel.value=localStorage.getItem('ultimoTitular')||document.getElementById('titularSelect').value||'';
+    iniciarHistorial();
+  }
 };
 
 window.switchVTab=function(tab,btn){
@@ -496,9 +511,14 @@ window.enviarRendicion=async function(){
   document.getElementById('btnEnviar').disabled=false;document.getElementById('sendingMsg').style.display='none';
 };
 window.limpiarForm=function(){gastos=[];renderGastos();window.removeFile();document.getElementById('obsGenerales').value='';document.getElementById('titularSelect').value='';};
+window.onCambiarTitularHistorial=function(){
+  localStorage.setItem('ultimoTitular',document.getElementById('titularHistorialSelect').value);
+  iniciarHistorial();
+};
 function iniciarHistorial(){
   if(tUnsubscribe)tUnsubscribe();
-  const titular=document.getElementById('titularSelect').value;
+  const titular=document.getElementById('titularHistorialSelect').value;
+  if(!titular){document.getElementById('historialContainer').innerHTML='<div class="empty-state"><div class="empty-icon">📭</div><p>Seleccioná tu nombre para ver tus rendiciones.</p></div>';return;}
   tUnsubscribe=onSnapshot(query(collection(db,'rendiciones'),orderBy('fechaEnvio','desc')),(snap)=>{
     const mias=snap.docs.map(d=>{const data=d.data();return{fbId:d.id,...data};}).filter(r=>r.tipo==='tarjeta'&&r.titular===titular);
     const c=document.getElementById('historialContainer');
