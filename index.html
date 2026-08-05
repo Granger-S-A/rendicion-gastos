@@ -177,7 +177,7 @@
       <div class="card">
         <div class="card-title"><div class="icon">👤</div> Datos</div>
         <div class="form-grid">
-          <div class="form-group"><label>Titular</label>
+          <div class="form-group"><label>Titular <span style="color:var(--red)">*</span></label>
             <select id="titularSelect" onchange="document.getElementById('titularNombre').value=this.value;localStorage.setItem('ultimoTitular',this.value);" style="">
               <option value="">— Seleccioná tu nombre —</option>
               <option>Pablo Andr Rucci</option><option>Jonatan Claudi Rose</option>
@@ -202,9 +202,9 @@
         <div style="border-top:1.5px solid var(--gray-100);margin-top:14px;padding-top:16px">
           <div style="font-size:13px;font-weight:700;color:var(--gray-600);margin-bottom:10px">Agregar gasto</div>
           <div class="form-grid cols-3">
-            <div class="form-group"><label>Fecha</label><input type="date" id="g_fecha"></div>
-            <div class="form-group"><label>Descripción</label><input type="text" id="g_desc" placeholder="Ej: YPF Rafaela"></div>
-            <div class="form-group"><label>Importe</label><input type="text" inputmode="decimal" id="g_importe" placeholder="0,00" oninput="formatARInput(this)"></div>
+            <div class="form-group"><label>Fecha <span style="color:var(--red)">*</span></label><input type="date" id="g_fecha"></div>
+            <div class="form-group"><label>Descripción <span style="color:var(--red)">*</span></label><input type="text" id="g_desc" placeholder="Ej: YPF Rafaela"></div>
+            <div class="form-group"><label>Importe <span style="color:var(--red)">*</span></label><input type="text" inputmode="decimal" id="g_importe" placeholder="0,00" oninput="formatARInput(this)"></div>
             <div class="form-group"><label>Moneda</label><select id="g_moneda"><option value="ARS">ARS — Pesos</option><option value="USD">USD — Dólares</option></select></div>
             <div class="form-group"><label>Categoría</label>
               <select id="g_categoria"><option>Combustible/Peajes</option><option>Alojamiento</option><option>Comidas en viaje</option><option>Transporte urbano</option><option>Servicios digitales</option><option>Otros</option></select>
@@ -218,18 +218,16 @@
         </div>
       </div>
       <div class="card">
-        <div class="card-title"><div class="icon">📎</div> Adjuntar comprobante (opcional)</div>
-        <p style="font-size:13px;color:var(--gray-600);margin-bottom:14px">Adjuntá el comprobante si lo tenés. Máx. 5MB.</p>
+        <div class="card-title"><div class="icon">📎</div> Adjuntar comprobantes (opcional)</div>
+        <p style="font-size:13px;color:var(--gray-600);margin-bottom:6px">Adjuntá los comprobantes que tengas. Máx. 5MB por archivo.</p>
+        <p style="font-size:12px;color:var(--gray-600);margin-bottom:14px;font-style:italic">Subí una foto por cada comprobante — no juntes varios tickets o facturas en una sola foto.</p>
         <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
           <div class="upload-icon">📎</div>
-          <p><strong>Hacé clic</strong> o arrastrá el archivo aquí</p>
-          <p style="font-size:11px;margin-top:4px;color:var(--gray-400)">Opcional — PDF, JPG o PNG — máx. 5MB</p>
+          <p><strong>Hacé clic</strong> o arrastrá los archivos aquí</p>
+          <p style="font-size:11px;margin-top:4px;color:var(--gray-400)">Opcional — PDF, JPG o PNG — máx. 5MB por archivo — podés elegir varios</p>
         </div>
-        <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleFileInput(this)">
-        <div id="filePreview" style="display:none" class="file-preview">
-          <span style="font-size:20px">📄</span><span class="file-name" id="fileName"></span><span class="file-size" id="fileSize"></span>
-          <button class="remove-file" onclick="removeFile()">✕</button>
-        </div>
+        <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" multiple style="display:none" onchange="handleFileInput(this)">
+        <div id="filePreviewList"></div>
       </div>
       <div class="card">
         <div class="card-title"><div class="icon">💬</div> Observaciones generales</div>
@@ -268,18 +266,19 @@
       <div class="card">
         <div class="card-title"><div class="icon">🧳</div> Datos del viaje</div>
         <div class="form-grid cols-3">
-          <div class="form-group"><label>Nombre y apellido</label><input type="text" id="v_nombre" placeholder="Ej: Juan García"></div>
-          <div class="form-group"><label>Área de imputación</label>
+          <div class="form-group"><label>Nombre y apellido <span style="color:var(--red)">*</span></label><input type="text" id="v_nombre" placeholder="Ej: Juan García"></div>
+          <div class="form-group"><label>Área de imputación <span style="color:var(--red)">*</span></label>
             <select id="v_area"><option value="">— Seleccioná —</option><option>Comercial</option><option>Administración</option><option>Logística</option><option>Marketing</option><option>Operaciones</option><option>Gerencia</option><option>Otro</option></select>
           </div>
-          <div class="form-group"><label>Fecha(s) de viaje</label><input type="text" id="v_fechas" placeholder="Ej: 01/06 al 04/06"></div>
+          <div class="form-group"><label>Fecha(s) de viaje <span style="color:var(--red)">*</span></label><input type="text" id="v_fechas" placeholder="Ej: 01/06 al 04/06"></div>
         </div>
-        <div class="form-group" style="margin-top:14px"><label>Motivo del viaje</label><input type="text" id="v_motivo" placeholder="Ej: Visita clientes Rosario"></div>
+        <div class="form-group" style="margin-top:14px"><label>Motivo del viaje <span style="color:var(--red)">*</span></label><input type="text" id="v_motivo" placeholder="Ej: Visita clientes Rosario"></div>
         <div class="form-grid cols-3" style="margin-top:14px">
           <div class="form-group"><label>¿Recibió efectivo?</label>
             <select id="v_recibioEfectivo" onchange="window.toggleVEfectivo()"><option value="No">No</option><option value="Si">Sí</option></select>
           </div>
-          <div class="form-group" id="vEfectivoImporteWrap" style="display:none"><label>Importe recibido (ARS)</label><input type="text" inputmode="decimal" id="v_importeEfectivo" placeholder="0,00" oninput="formatARInput(this)"></div>
+          <div class="form-group" id="vEfectivoImporteWrap" style="display:none"><label>Importe recibido (ARS)</label><input type="text" inputmode="decimal" id="v_importeEfectivo" placeholder="0,00" oninput="formatARInput(this);window.actualizarSaldoEfectivo()"></div>
+          <div id="saldoEfectivoResult" style="display:none;margin-top:14px;padding:10px 14px;background:var(--gray-50);border-radius:6px;border:1.5px solid var(--gray-200)"></div>
         </div>
       </div>
       <div class="card">
@@ -290,9 +289,9 @@
         <div style="border-top:1.5px solid var(--gray-100);margin-top:14px;padding-top:16px">
           <div style="font-size:13px;font-weight:700;color:var(--gray-600);margin-bottom:10px">Agregar gasto</div>
           <div class="form-grid cols-3">
-            <div class="form-group"><label>Fecha</label><input type="date" id="vg_fecha"></div>
-            <div class="form-group"><label>Concepto</label><input type="text" id="vg_concepto" placeholder="Ej: Almuerzo, Uber"></div>
-            <div class="form-group"><label>Importe (ARS)</label><input type="text" inputmode="decimal" id="vg_importe" placeholder="0,00" oninput="formatARInput(this)"></div>
+            <div class="form-group"><label>Fecha <span style="color:var(--red)">*</span></label><input type="date" id="vg_fecha"></div>
+            <div class="form-group"><label>Concepto <span style="color:var(--red)">*</span></label><input type="text" id="vg_concepto" placeholder="Ej: Almuerzo, Uber"></div>
+            <div class="form-group"><label>Importe (ARS) <span style="color:var(--red)">*</span></label><input type="text" inputmode="decimal" id="vg_importe" placeholder="0,00" oninput="formatARInput(this)"></div>
             <div class="form-group"><label>Facturado a</label>
               <select id="vg_facturado"><option value="Granger S.A.">Granger S.A.</option><option value="Consumidor Final">Consumidor Final</option><option value="Sin factura">Sin factura</option></select>
             </div>
@@ -324,16 +323,14 @@
       </div>
       <div class="card">
         <div class="card-title"><div class="icon">📎</div> Adjuntar comprobantes (opcional)</div>
-        <p style="font-size:13px;color:var(--gray-600);margin-bottom:14px">Adjuntá tickets, facturas u otros comprobantes. Máx. 5MB.</p>
+        <p style="font-size:13px;color:var(--gray-600);margin-bottom:6px">Adjuntá tickets, facturas u otros comprobantes. Máx. 5MB por archivo.</p>
+        <p style="font-size:12px;color:var(--gray-600);margin-bottom:14px;font-style:italic">Subí una foto por cada comprobante — no juntes varios tickets o facturas en una sola foto.</p>
         <div class="upload-zone" id="vUploadZone" onclick="document.getElementById('vFileInput').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleVDrop(event)">
-          <div class="upload-icon">📎</div><p><strong>Hacé clic</strong> o arrastrá el archivo aquí</p>
-          <p style="font-size:11px;margin-top:4px;color:var(--gray-400)">Opcional — PDF, JPG o PNG — máx. 5MB</p>
+          <div class="upload-icon">📎</div><p><strong>Hacé clic</strong> o arrastrá los archivos aquí</p>
+          <p style="font-size:11px;margin-top:4px;color:var(--gray-400)">Opcional — PDF, JPG o PNG — máx. 5MB por archivo — podés elegir varios</p>
         </div>
-        <input type="file" id="vFileInput" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleVFileInput(this)">
-        <div id="vFilePreview" style="display:none" class="file-preview">
-          <span style="font-size:20px">📄</span><span class="file-name" id="vFileName"></span><span class="file-size" id="vFileSize"></span>
-          <button class="remove-file" onclick="removeVFile()">✕</button>
-        </div>
+        <input type="file" id="vFileInput" accept=".pdf,.jpg,.jpeg,.png" multiple style="display:none" onchange="handleVFileInput(this)">
+        <div id="vFilePreviewList"></div>
       </div>
       <div class="card">
         <div class="card-title"><div class="icon">💬</div> Observaciones</div>
@@ -375,7 +372,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const CATEGORIAS_ICON = {'Combustible/Peajes':'⛽','Alojamiento':'🏨','Comidas en viaje':'🍽️','Transporte urbano':'🚗','Servicios digitales':'💻','Otros':'📦'};
-let gastos=[], attachedFile=null, vGastos=[], vAttachedFile=null;
+let gastos=[], attachedFiles=[], vGastos=[], vAttachedFiles=[];
 let tUnsubscribe=null, vUnsubscribe=null;
 
 function fmt(n){return Number(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});}
@@ -490,9 +487,27 @@ function renderGastos(){
   list.innerHTML=gastos.map(g=>{if(g.moneda==='ARS')tARS+=g.importe;else tUSD+=g.importe;const icon=CATEGORIAS_ICON[g.categoria]||'📦';return `<div class="gasto-row"><span style="font-size:12px;color:var(--gray-600)">${formatDate(g.fecha)}</span><span>${icon} <strong>${g.desc}</strong>${g.obs?`<br><span style="font-size:11px;color:var(--gray-400)">${g.obs}</span>`:''}</span><span style="font-weight:700">${g.moneda==='ARS'?'$':'USD '}${fmt(g.importe)}</span><span style="font-size:11px;color:var(--gray-600)">${g.moneda}</span><span style="font-size:11px">${g.factura==='Sí, a nombre de Granger S.A.'?'✅ Factura':g.factura==='Ticket/comprobante'?'🧾 Ticket':'⚠️ Sin comp.'}</span><span style="font-size:11px;color:var(--gray-600)">${g.categoria}</span><button class="remove-btn" onclick="eliminarGasto(${g.id})">✕</button></div>`;}).join('');
   document.getElementById('totalARS').textContent='$'+fmt(tARS);document.getElementById('totalUSD').textContent='USD '+fmt(tUSD);
 }
-window.handleFileInput=function(input){const file=input.files[0];if(!file)return;if(file.size>5*1024*1024){showToast('El archivo supera los 5MB','error');return;}const reader=new FileReader();reader.onload=e=>{attachedFile={name:String(file.name||'archivo'),size:Number(file.size||0),type:String(file.type||'application/octet-stream'),data:String(e.target.result||'')};document.getElementById('filePreview').style.display='flex';document.getElementById('fileName').textContent=file.name;document.getElementById('fileSize').textContent=formatFileSize(file.size);document.getElementById('uploadZone').style.display='none';};reader.onerror=()=>{showToast('Error al leer el archivo','error');};reader.readAsDataURL(file);};
-window.handleDrop=function(e){e.preventDefault();document.getElementById('uploadZone').classList.remove('dragover');const f=e.dataTransfer.files[0];if(f){const dt=new DataTransfer();dt.items.add(f);document.getElementById('fileInput').files=dt.files;window.handleFileInput(document.getElementById('fileInput'));}};
-window.removeFile=function(){attachedFile=null;document.getElementById('fileInput').value='';document.getElementById('filePreview').style.display='none';document.getElementById('uploadZone').style.display='';};
+function renderFilePreviews(){
+  const c=document.getElementById('filePreviewList');
+  c.innerHTML=attachedFiles.map(f=>`<div class="file-preview" style="display:flex">
+    <span style="font-size:20px">📄</span><span class="file-name">${f.name}</span><span class="file-size">${formatFileSize(f.size)}</span>
+    <button class="remove-file" onclick="removeFile('${f.id}')">✕</button>
+  </div>`).join('');
+}
+window.handleFileInput=function(input){
+  const files=Array.from(input.files||[]);
+  if(!files.length)return;
+  files.forEach(file=>{
+    if(file.size>5*1024*1024){showToast(`"${file.name}" supera los 5MB`,'error');return;}
+    const reader=new FileReader();
+    reader.onload=e=>{attachedFiles.push({id:Date.now()+Math.random(),name:String(file.name||'archivo'),size:Number(file.size||0),type:String(file.type||'application/octet-stream'),data:String(e.target.result||'')});renderFilePreviews();};
+    reader.onerror=()=>{showToast('Error al leer el archivo','error');};
+    reader.readAsDataURL(file);
+  });
+  input.value='';
+};
+window.handleDrop=function(e){e.preventDefault();document.getElementById('uploadZone').classList.remove('dragover');if(e.dataTransfer.files.length){const dt=new DataTransfer();Array.from(e.dataTransfer.files).forEach(f=>dt.items.add(f));document.getElementById('fileInput').files=dt.files;window.handleFileInput(document.getElementById('fileInput'));}};
+window.removeFile=function(id){attachedFiles=attachedFiles.filter(f=>f.id!=id);renderFilePreviews();};
 window.enviarRendicion=async function(){
   const titular=document.getElementById('titularSelect').value,periodo=document.getElementById('periodoSelect').value,obs=document.getElementById('obsGenerales').value.trim();
   if(!titular){showToast('Seleccioná tu nombre','error');return;}
@@ -501,16 +516,16 @@ window.enviarRendicion=async function(){
   const totalUSD=gastos.filter(g=>g.moneda==='USD').reduce((s,g)=>s+g.importe,0);
   document.getElementById('btnEnviar').disabled=true;document.getElementById('sendingMsg').style.display='';
   try{
-    await addDoc(collection(db,'rendiciones'),{tipo:'tarjeta',titular,periodo,gastos:[...gastos],adjunto:attachedFile,obs,totalARS,totalUSD,sinComp:gastos.filter(g=>g.factura==='No').length,estado:'pendiente',fechaEnvio:new Date().toISOString(),comentarioAdmin:'',respuestaTitular:''});
+    await addDoc(collection(db,'rendiciones'),{tipo:'tarjeta',titular,periodo,gastos:[...gastos],adjuntos:[...attachedFiles],obs,totalARS,totalUSD,sinComp:gastos.filter(g=>g.factura==='No').length,estado:'pendiente',fechaEnvio:new Date().toISOString(),comentarioAdmin:'',respuestaTitular:''});
     const detalle=gastos.map(g=>`• ${formatDate(g.fecha)} — ${g.desc}: ${g.moneda==='ARS'?'$':'USD '}${fmt(g.importe)}`).join('\n');
     await enviarEmail(titular,'Tarjeta Corporativa',periodo,`ARS $${fmt(totalARS)}${totalUSD>0?' + USD '+fmt(totalUSD):''}`,detalle);
-    gastos=[];attachedFile=null;renderGastos();window.removeFile();document.getElementById('obsGenerales').value='';document.getElementById('titularSelect').value='';
+    gastos=[];attachedFiles=[];renderGastos();renderFilePreviews();document.getElementById('obsGenerales').value='';document.getElementById('titularSelect').value='';
     showToast('Rendición enviada ✓','success');
     window.switchTab('t-historial',document.querySelectorAll('#viewTarjeta .tab-btn')[1]);
   }catch(e){showToast('Error: '+e.message,'error');}
   document.getElementById('btnEnviar').disabled=false;document.getElementById('sendingMsg').style.display='none';
 };
-window.limpiarForm=function(){gastos=[];renderGastos();window.removeFile();document.getElementById('obsGenerales').value='';document.getElementById('titularSelect').value='';};
+window.limpiarForm=function(){gastos=[];renderGastos();attachedFiles=[];renderFilePreviews();document.getElementById('obsGenerales').value='';document.getElementById('titularSelect').value='';};
 window.onCambiarTitularHistorial=function(){
   localStorage.setItem('ultimoTitular',document.getElementById('titularHistorialSelect').value);
   iniciarHistorial();
@@ -563,35 +578,67 @@ function renderVGastos(){
   header.style.display='';totalRow.style.display='';let total=0;
   list.innerHTML=vGastos.map(g=>{total+=g.importe;return `<div class="gasto-row"><span style="font-size:12px;color:var(--gray-600)">${formatDate(g.fecha)}</span><span><strong>${g.concepto}</strong>${g.comentarios?`<br><span style="font-size:11px;color:var(--gray-400)">${g.comentarios}</span>`:''}</span><span style="font-weight:700">$${fmt(g.importe)}</span><span style="font-size:11px;color:var(--gray-600)">${g.facturado}</span><span style="font-size:11px">${g.metodo==='REINTEGRO'?'🔄 Reintegro':'💰 Adelanto'}</span><span style="font-size:11px">${g.link?`<a href="${g.link}" target="_blank" style="color:var(--black);text-decoration:underline">Ver</a>`:'—'}</span><button class="remove-btn" onclick="eliminarVGasto(${g.id})">✕</button></div>`;}).join('');
   document.getElementById('vTotalARS').textContent='$'+fmt(total);
+  if(window.actualizarSaldoEfectivo)window.actualizarSaldoEfectivo();
 }
-window.calcKm=function(){const km=parseFloat(document.getElementById('v_km').value)||0;const val=parseARNumber(document.getElementById('v_valorKm').value)||0;document.getElementById('kmResult').style.display=km>0?'':'none';document.getElementById('kmImporte').textContent='$'+fmt(km*val);};
-window.handleVFileInput=function(input){const file=input.files[0];if(!file)return;if(file.size>5*1024*1024){showToast('El archivo supera los 5MB','error');return;}const reader=new FileReader();reader.onload=e=>{vAttachedFile={name:String(file.name||'archivo'),size:Number(file.size||0),type:String(file.type||'application/octet-stream'),data:String(e.target.result||'')};document.getElementById('vFilePreview').style.display='flex';document.getElementById('vFileName').textContent=file.name;document.getElementById('vFileSize').textContent=formatFileSize(file.size);document.getElementById('vUploadZone').style.display='none';};reader.onerror=()=>{showToast('Error al leer el archivo','error');};reader.readAsDataURL(file);};
-window.handleVDrop=function(e){e.preventDefault();document.getElementById('vUploadZone').classList.remove('dragover');const f=e.dataTransfer.files[0];if(f){const dt=new DataTransfer();dt.items.add(f);document.getElementById('vFileInput').files=dt.files;window.handleVFileInput(document.getElementById('vFileInput'));}};
-window.removeVFile=function(){vAttachedFile=null;document.getElementById('vFileInput').value='';document.getElementById('vFilePreview').style.display='none';document.getElementById('vUploadZone').style.display='';};
+window.calcKm=function(){const km=parseFloat(document.getElementById('v_km').value)||0;const val=parseARNumber(document.getElementById('v_valorKm').value)||0;document.getElementById('kmResult').style.display=km>0?'':'none';document.getElementById('kmImporte').textContent='$'+fmt(km*val);if(window.actualizarSaldoEfectivo)window.actualizarSaldoEfectivo();};
+function renderVFilePreviews(){
+  const c=document.getElementById('vFilePreviewList');
+  c.innerHTML=vAttachedFiles.map(f=>`<div class="file-preview" style="display:flex">
+    <span style="font-size:20px">📄</span><span class="file-name">${f.name}</span><span class="file-size">${formatFileSize(f.size)}</span>
+    <button class="remove-file" onclick="removeVFile('${f.id}')">✕</button>
+  </div>`).join('');
+}
+window.handleVFileInput=function(input){
+  const files=Array.from(input.files||[]);
+  if(!files.length)return;
+  files.forEach(file=>{
+    if(file.size>5*1024*1024){showToast(`"${file.name}" supera los 5MB`,'error');return;}
+    const reader=new FileReader();
+    reader.onload=e=>{vAttachedFiles.push({id:Date.now()+Math.random(),name:String(file.name||'archivo'),size:Number(file.size||0),type:String(file.type||'application/octet-stream'),data:String(e.target.result||'')});renderVFilePreviews();};
+    reader.onerror=()=>{showToast('Error al leer el archivo','error');};
+    reader.readAsDataURL(file);
+  });
+  input.value='';
+};
+window.handleVDrop=function(e){e.preventDefault();document.getElementById('vUploadZone').classList.remove('dragover');if(e.dataTransfer.files.length){const dt=new DataTransfer();Array.from(e.dataTransfer.files).forEach(f=>dt.items.add(f));document.getElementById('vFileInput').files=dt.files;window.handleVFileInput(document.getElementById('vFileInput'));}};
+window.removeVFile=function(id){vAttachedFiles=vAttachedFiles.filter(f=>f.id!=id);renderVFilePreviews();};
 window.enviarViatico=async function(){
   const nombre=document.getElementById('v_nombre').value.trim(),area=document.getElementById('v_area').value,
     fechas=document.getElementById('v_fechas').value.trim(),motivo=document.getElementById('v_motivo').value.trim(),obs=document.getElementById('vObs').value.trim();
   const recibioEfectivo=document.getElementById('v_recibioEfectivo').value,
     importeEfectivo=recibioEfectivo==='Si'?(parseARNumber(document.getElementById('v_importeEfectivo').value)||0):0;
-  if(!nombre){showToast('Ingresá tu nombre','error');return;}if(!area){showToast('Seleccioná el área','error');return;}if(!fechas){showToast('Ingresá las fechas','error');return;}if(!vGastos.length){showToast('Agregá al menos un gasto','error');return;}
+  if(!nombre){showToast('Ingresá tu nombre','error');return;}if(!area){showToast('Seleccioná el área','error');return;}if(!fechas){showToast('Ingresá las fechas','error');return;}if(!motivo){showToast('Ingresá el motivo del viaje','error');return;}if(!vGastos.length){showToast('Agregá al menos un gasto','error');return;}
   const km=parseFloat(document.getElementById('v_km').value)||0,valorKm=parseARNumber(document.getElementById('v_valorKm').value)||501.05,kmImporte=km*valorKm;
   const totalARS=vGastos.reduce((s,g)=>s+g.importe,0)+kmImporte;
   document.getElementById('vBtnEnviar').disabled=true;document.getElementById('vSendingMsg').style.display='';
   try{
-    await addDoc(collection(db,'rendiciones'),{tipo:'viaticos',titular:nombre,area,fechasViaje:fechas,motivo,gastos:[...vGastos],km,valorKm,kmImporte,totalGastos:totalARS-kmImporte,totalARS,recibioEfectivo:recibioEfectivo==='Si',importeEfectivo,adjunto:vAttachedFile,obs,estado:'pendiente',fechaEnvio:new Date().toISOString(),comentarioAdmin:'',respuestaTitular:''});
+    await addDoc(collection(db,'rendiciones'),{tipo:'viaticos',titular:nombre,area,fechasViaje:fechas,motivo,gastos:[...vGastos],km,valorKm,kmImporte,totalGastos:totalARS-kmImporte,totalARS,recibioEfectivo:recibioEfectivo==='Si',importeEfectivo,adjuntos:[...vAttachedFiles],obs,estado:'pendiente',fechaEnvio:new Date().toISOString(),comentarioAdmin:'',respuestaTitular:''});
     const detalle=vGastos.map(g=>`• ${formatDate(g.fecha)} — ${g.concepto}: $${fmt(g.importe)} (${g.metodo})`).join('\n')+(km>0?`\n• Kilometraje: ${km} km = $${fmt(kmImporte)}`:'' );
     await enviarEmail(nombre,'Viáticos',`${fechas} — ${motivo}`,'$'+fmt(totalARS),detalle);
     const responsable=buscarResponsableDeEmpleado(nombre);
     if(responsable)await enviarEmailResponsable(responsable,nombre,`${fechas} — ${motivo}`,'$'+fmt(totalARS),detalle);
-    vGastos=[];vAttachedFile=null;renderVGastos();window.removeVFile();
-    ['v_nombre','v_fechas','v_motivo','vObs','v_km','v_importeEfectivo'].forEach(id=>document.getElementById(id).value='');document.getElementById('v_area').value='';document.getElementById('v_recibioEfectivo').value='No';document.getElementById('vEfectivoImporteWrap').style.display='none';document.getElementById('kmResult').style.display='none';
+    vGastos=[];vAttachedFiles=[];renderVGastos();renderVFilePreviews();
+    ['v_nombre','v_fechas','v_motivo','vObs','v_km','v_importeEfectivo'].forEach(id=>document.getElementById(id).value='');document.getElementById('v_area').value='';document.getElementById('v_recibioEfectivo').value='No';document.getElementById('vEfectivoImporteWrap').style.display='none';document.getElementById('saldoEfectivoResult').style.display='none';document.getElementById('kmResult').style.display='none';
     showToast('Rendición enviada ✓','success');
     window.switchVTab('v-historial',document.querySelectorAll('#viewViaticos .tab-btn')[1]);
   }catch(e){showToast('Error: '+e.message,'error');}
   document.getElementById('vBtnEnviar').disabled=false;document.getElementById('vSendingMsg').style.display='none';
 };
-window.toggleVEfectivo=function(){const v=document.getElementById('v_recibioEfectivo').value;document.getElementById('vEfectivoImporteWrap').style.display=v==='Si'?'':'none';if(v!=='Si')document.getElementById('v_importeEfectivo').value='';};
-window.limpiarVForm=function(){vGastos=[];renderVGastos();window.removeVFile();['v_nombre','v_area','v_fechas','v_motivo','vObs','v_km','v_importeEfectivo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('v_recibioEfectivo').value='No';document.getElementById('vEfectivoImporteWrap').style.display='none';document.getElementById('kmResult').style.display='none';};
+window.toggleVEfectivo=function(){const v=document.getElementById('v_recibioEfectivo').value;document.getElementById('vEfectivoImporteWrap').style.display=v==='Si'?'':'none';if(v!=='Si')document.getElementById('v_importeEfectivo').value='';window.actualizarSaldoEfectivo();};
+window.actualizarSaldoEfectivo=function(){
+  const recibio=document.getElementById('v_recibioEfectivo').value;
+  const resultEl=document.getElementById('saldoEfectivoResult');
+  if(recibio!=='Si'){resultEl.style.display='none';return;}
+  const importeEfectivo=parseARNumber(document.getElementById('v_importeEfectivo').value)||0;
+  const km=parseFloat(document.getElementById('v_km').value)||0,valorKm=parseARNumber(document.getElementById('v_valorKm').value)||501.05;
+  const totalGastado=vGastos.reduce((s,g)=>s+g.importe,0)+(km*valorKm);
+  const saldo=importeEfectivo-totalGastado;
+  resultEl.style.display='';
+  if(saldo>0.005){resultEl.innerHTML=`<span style="font-size:13px;color:var(--gray-600)">Saldo a devolver a Administración: </span><span style="font-size:15px;font-weight:800;color:var(--red)">$${fmt(saldo)}</span>`;}
+  else if(saldo<-0.005){resultEl.innerHTML=`<span style="font-size:13px;color:var(--gray-600)">Gastaste más de lo recibido — a reintegrarte: </span><span style="font-size:15px;font-weight:800;color:var(--black)">$${fmt(Math.abs(saldo))}</span>`;}
+  else{resultEl.innerHTML=`<span style="font-size:13px;color:var(--gray-600)">Sin saldo pendiente — el efectivo recibido cubre exactamente lo gastado.</span>`;}
+};
+window.limpiarVForm=function(){vGastos=[];renderVGastos();vAttachedFiles=[];renderVFilePreviews();['v_nombre','v_area','v_fechas','v_motivo','vObs','v_km','v_importeEfectivo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('v_recibioEfectivo').value='No';document.getElementById('vEfectivoImporteWrap').style.display='none';document.getElementById('saldoEfectivoResult').style.display='none';document.getElementById('kmResult').style.display='none';};
 function iniciarVHistorial(){
   if(vUnsubscribe)vUnsubscribe();
   vUnsubscribe=onSnapshot(query(collection(db,'rendiciones'),orderBy('fechaEnvio','desc')),(snap)=>{
