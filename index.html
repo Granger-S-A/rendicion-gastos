@@ -213,7 +213,7 @@
               <select id="g_factura"><option value="Sí, a nombre de Granger S.A.">Sí — Granger S.A.</option><option value="Ticket/comprobante">Ticket / Comprobante</option><option value="No">Sin comprobante</option></select>
             </div>
           </div>
-          <div class="form-group" style="margin-top:10px"><label>Observación</label><input type="text" id="g_obs" placeholder="Ej: viaje a Rosario 23/5"></div>
+          <div class="form-group" style="margin-top:10px"><label>Observación <span style="color:var(--red)">*</span></label><input type="text" id="g_obs" placeholder="Ej: viaje a Rosario 23/5"></div>
           <div style="margin-top:12px"><button class="btn btn-accent" onclick="agregarGasto()">+ Agregar gasto</button></div>
         </div>
       </div>
@@ -300,7 +300,7 @@
             </div>
             <div class="form-group"><label>Link de factura (opcional)</label><input type="text" id="vg_link" placeholder="https://..."></div>
           </div>
-          <div class="form-group" style="margin-top:10px"><label>Comentarios</label><input type="text" id="vg_comentarios" placeholder="Ej: pagué por otro, adjunto transferencia"></div>
+          <div class="form-group" style="margin-top:10px"><label>Comentarios / Detalle <span style="color:var(--red)">*</span></label><input type="text" id="vg_comentarios" placeholder="Ej: pagué por otro, adjunto transferencia"></div>
           <div style="margin-top:12px;display:flex;align-items:center;gap:8px">
             <input type="checkbox" id="vg_tienePropina" onchange="window.toggleVGPropina()">
             <label style="text-transform:none;font-size:13px;font-weight:600;color:var(--gray-800)">¿Este gasto incluyó propina?</label>
@@ -474,6 +474,7 @@ window.agregarGasto=function(){
   if(!fecha){showToast('Ingresá la fecha','error');return;}
   if(!desc){showToast('Ingresá la descripción','error');return;}
   if(!importe||importe<=0){showToast('Ingresá un importe válido','error');return;}
+  if(!obs){showToast('Completá la observación del gasto','error');return;}
   gastos.push({id:Date.now(),fecha,desc,importe,moneda,categoria,factura,obs});
   renderGastos();
   ['g_fecha','g_desc','g_importe','g_obs'].forEach(id=>document.getElementById(id).value='');
@@ -557,6 +558,7 @@ window.agregarVGasto=function(){
   if(!fecha){showToast('Ingresá la fecha','error');return;}
   if(!concepto){showToast('Ingresá el concepto','error');return;}
   if(!importe||importe<=0){showToast('Ingresá un importe válido','error');return;}
+  if(!comentarios){showToast('Completá el detalle/comentario del gasto','error');return;}
   const tienePropina=document.getElementById('vg_tienePropina').checked;
   const importePropina=tienePropina?parseARNumber(document.getElementById('vg_importePropina').value):0;
   if(tienePropina&&importePropina<=0){showToast('Ingresá el importe de la propina','error');return;}
