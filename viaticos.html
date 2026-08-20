@@ -133,6 +133,7 @@
   body { display:flex; flex-direction:column; min-height:100vh; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
 <header class="app-header">
@@ -177,8 +178,8 @@
       <div class="card">
         <div class="card-title"><div class="icon">👤</div> Datos</div>
         <div class="form-grid">
-          <div class="form-group"><label>Titular</label>
-            <select id="titularSelect" onchange="document.getElementById('titularNombre').value=this.value" style="">
+          <div class="form-group"><label>Titular <span style="color:var(--red)">*</span></label>
+            <select id="titularSelect" onchange="document.getElementById('titularNombre').value=this.value;localStorage.setItem('ultimoTitular',this.value);" style="">
               <option value="">— Seleccioná tu nombre —</option>
               <option>Pablo Andr Rucci</option><option>Jonatan Claudi Rose</option>
               <option>Rodrigo Yoel Sabena</option><option>Tomas Alej Giuliani</option>
@@ -202,9 +203,9 @@
         <div style="border-top:1.5px solid var(--gray-100);margin-top:14px;padding-top:16px">
           <div style="font-size:13px;font-weight:700;color:var(--gray-600);margin-bottom:10px">Agregar gasto</div>
           <div class="form-grid cols-3">
-            <div class="form-group"><label>Fecha</label><input type="date" id="g_fecha"></div>
-            <div class="form-group"><label>Descripción</label><input type="text" id="g_desc" placeholder="Ej: YPF Rafaela"></div>
-            <div class="form-group"><label>Importe</label><input type="text" inputmode="decimal" id="g_importe" placeholder="0,00" oninput="formatARInput(this)"></div>
+            <div class="form-group"><label>Fecha <span style="color:var(--red)">*</span></label><input type="date" id="g_fecha"></div>
+            <div class="form-group"><label>Descripción <span style="color:var(--red)">*</span></label><input type="text" id="g_desc" placeholder="Ej: YPF Rafaela"></div>
+            <div class="form-group"><label>Importe <span style="color:var(--red)">*</span></label><input type="text" inputmode="decimal" id="g_importe" placeholder="0,00" oninput="formatARInput(this)"></div>
             <div class="form-group"><label>Moneda</label><select id="g_moneda"><option value="ARS">ARS — Pesos</option><option value="USD">USD — Dólares</option></select></div>
             <div class="form-group"><label>Categoría</label>
               <select id="g_categoria"><option>Combustible/Peajes</option><option>Alojamiento</option><option>Comidas en viaje</option><option>Transporte urbano</option><option>Servicios digitales</option><option>Otros</option></select>
@@ -212,24 +213,30 @@
             <div class="form-group"><label>Comprobante</label>
               <select id="g_factura"><option value="Sí, a nombre de Granger S.A.">Sí — Granger S.A.</option><option value="Ticket/comprobante">Ticket / Comprobante</option><option value="No">Sin comprobante</option></select>
             </div>
+            <div class="form-group"><label>Proveedor</label><input type="text" id="g_proveedor" placeholder="Se completa solo al leer el comprobante"></div>
+            <div class="form-group"><label>Nro. de factura</label><input type="text" id="g_nroFactura" placeholder="Se completa solo al leer el comprobante"></div>
           </div>
-          <div class="form-group" style="margin-top:10px"><label>Observación</label><input type="text" id="g_obs" placeholder="Ej: viaje a Rosario 23/5"></div>
+          <div class="form-group" style="margin-top:10px"><label>Observación <span style="color:var(--red)">*</span></label><input type="text" id="g_obs" placeholder="Ej: viaje a Rosario 23/5"></div>
+          <div style="margin-top:10px">
+            <label style="font-size:12px;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:0.4px">Foto del comprobante de este gasto (opcional)</label>
+            <p style="font-size:11px;color:var(--gray-400);margin:2px 0 6px">Subila y completamos fecha, importe, proveedor y nro. de factura automáticamente.</p>
+            <input type="file" id="g_gastoComprobanteFile" accept=".pdf,.jpg,.jpeg,.png" onchange="window.leerYAdjuntarComprobanteGasto(this,'g')">
+            <div id="g_ocrStatus" style="font-size:12px;color:var(--gray-600);margin-top:6px"></div>
+          </div>
           <div style="margin-top:12px"><button class="btn btn-accent" onclick="agregarGasto()">+ Agregar gasto</button></div>
         </div>
       </div>
       <div class="card">
-        <div class="card-title"><div class="icon">📎</div> Adjuntar comprobante (opcional)</div>
-        <p style="font-size:13px;color:var(--gray-600);margin-bottom:14px">Adjuntá el comprobante si lo tenés. Máx. 5MB.</p>
+        <div class="card-title"><div class="icon">📎</div> Adjuntar comprobantes (opcional)</div>
+        <p style="font-size:13px;color:var(--gray-600);margin-bottom:6px">Adjuntá los comprobantes que tengas. Máx. 5MB por archivo.</p>
+        <p style="font-size:12px;color:var(--gray-600);margin-bottom:14px;font-style:italic">Subí una foto por cada comprobante — no juntes varios tickets o facturas en una sola foto.</p>
         <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
           <div class="upload-icon">📎</div>
-          <p><strong>Hacé clic</strong> o arrastrá el archivo aquí</p>
-          <p style="font-size:11px;margin-top:4px;color:var(--gray-400)">Opcional — PDF, JPG o PNG — máx. 5MB</p>
+          <p><strong>Hacé clic</strong> o arrastrá los archivos aquí</p>
+          <p style="font-size:11px;margin-top:4px;color:var(--gray-400)">Opcional — PDF, JPG o PNG — máx. 5MB por archivo — podés elegir varios</p>
         </div>
-        <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleFileInput(this)">
-        <div id="filePreview" style="display:none" class="file-preview">
-          <span style="font-size:20px">📄</span><span class="file-name" id="fileName"></span><span class="file-size" id="fileSize"></span>
-          <button class="remove-file" onclick="removeFile()">✕</button>
-        </div>
+        <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" multiple style="display:none" onchange="handleFileInput(this)">
+        <div id="filePreviewList"></div>
       </div>
       <div class="card">
         <div class="card-title"><div class="icon">💬</div> Observaciones generales</div>
@@ -241,7 +248,18 @@
         <button class="btn btn-primary" id="btnEnviar" onclick="enviarRendicion()">✓ Enviar rendición</button>
       </div>
     </div>
-    <div id="t-historial" style="display:none"><div id="historialContainer"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></div></div>
+    <div id="t-historial" style="display:none">
+      <div class="form-group" style="max-width:280px;margin-bottom:16px">
+        <label>Titular</label>
+        <select id="titularHistorialSelect" onchange="window.onCambiarTitularHistorial()">
+          <option value="">— Seleccioná tu nombre —</option>
+          <option>Pablo Andr Rucci</option><option>Jonatan Claudi Rose</option>
+          <option>Rodrigo Yoel Sabena</option><option>Tomas Alej Giuliani</option>
+          <option>Matias Navarro</option><option>Jose I. Lobos</option>
+        </select>
+      </div>
+      <div id="historialContainer"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></div>
+    </div>
   </div>
 </div>
 
@@ -257,18 +275,19 @@
       <div class="card">
         <div class="card-title"><div class="icon">🧳</div> Datos del viaje</div>
         <div class="form-grid cols-3">
-          <div class="form-group"><label>Nombre y apellido</label><input type="text" id="v_nombre" placeholder="Ej: Juan García"></div>
-          <div class="form-group"><label>Área de imputación</label>
+          <div class="form-group"><label>Nombre y apellido <span style="color:var(--red)">*</span></label><input type="text" id="v_nombre" placeholder="Ej: Juan García"></div>
+          <div class="form-group"><label>Área de imputación <span style="color:var(--red)">*</span></label>
             <select id="v_area"><option value="">— Seleccioná —</option><option>Comercial</option><option>Administración</option><option>Logística</option><option>Marketing</option><option>Operaciones</option><option>Gerencia</option><option>Otro</option></select>
           </div>
-          <div class="form-group"><label>Fecha(s) de viaje</label><input type="text" id="v_fechas" placeholder="Ej: 01/06 al 04/06"></div>
+          <div class="form-group"><label>Fecha(s) de viaje <span style="color:var(--red)">*</span></label><input type="text" id="v_fechas" placeholder="Ej: 01/06 al 04/06"></div>
         </div>
-        <div class="form-group" style="margin-top:14px"><label>Motivo del viaje</label><input type="text" id="v_motivo" placeholder="Ej: Visita clientes Rosario"></div>
+        <div class="form-group" style="margin-top:14px"><label>Motivo del viaje <span style="color:var(--red)">*</span></label><input type="text" id="v_motivo" placeholder="Ej: Visita clientes Rosario"></div>
         <div class="form-grid cols-3" style="margin-top:14px">
           <div class="form-group"><label>¿Recibió efectivo?</label>
             <select id="v_recibioEfectivo" onchange="window.toggleVEfectivo()"><option value="No">No</option><option value="Si">Sí</option></select>
           </div>
-          <div class="form-group" id="vEfectivoImporteWrap" style="display:none"><label>Importe recibido (ARS)</label><input type="text" inputmode="decimal" id="v_importeEfectivo" placeholder="0,00" oninput="formatARInput(this)"></div>
+          <div class="form-group" id="vEfectivoImporteWrap" style="display:none"><label>Importe recibido (ARS)</label><input type="text" inputmode="decimal" id="v_importeEfectivo" placeholder="0,00" oninput="formatARInput(this);window.actualizarSaldoEfectivo()"></div>
+          <div id="saldoEfectivoResult" style="display:none;margin-top:14px;padding:10px 14px;background:var(--gray-50);border-radius:6px;border:1.5px solid var(--gray-200)"></div>
         </div>
       </div>
       <div class="card">
@@ -279,9 +298,9 @@
         <div style="border-top:1.5px solid var(--gray-100);margin-top:14px;padding-top:16px">
           <div style="font-size:13px;font-weight:700;color:var(--gray-600);margin-bottom:10px">Agregar gasto</div>
           <div class="form-grid cols-3">
-            <div class="form-group"><label>Fecha</label><input type="date" id="vg_fecha"></div>
-            <div class="form-group"><label>Concepto</label><input type="text" id="vg_concepto" placeholder="Ej: Almuerzo, Uber"></div>
-            <div class="form-group"><label>Importe (ARS)</label><input type="text" inputmode="decimal" id="vg_importe" placeholder="0,00" oninput="formatARInput(this)"></div>
+            <div class="form-group"><label>Fecha <span style="color:var(--red)">*</span></label><input type="date" id="vg_fecha"></div>
+            <div class="form-group"><label>Concepto <span style="color:var(--red)">*</span></label><input type="text" id="vg_concepto" placeholder="Ej: Almuerzo, Uber"></div>
+            <div class="form-group"><label>Importe (ARS) <span style="color:var(--red)">*</span></label><input type="text" inputmode="decimal" id="vg_importe" placeholder="0,00" oninput="formatARInput(this)"></div>
             <div class="form-group"><label>Facturado a</label>
               <select id="vg_facturado"><option value="Granger S.A.">Granger S.A.</option><option value="Consumidor Final">Consumidor Final</option><option value="Sin factura">Sin factura</option></select>
             </div>
@@ -289,8 +308,16 @@
               <select id="vg_metodo"><option value="REINTEGRO">Reintegro (gasto propio)</option><option value="ADELANTO">Adelanto empresa</option></select>
             </div>
             <div class="form-group"><label>Link de factura (opcional)</label><input type="text" id="vg_link" placeholder="https://..."></div>
+            <div class="form-group"><label>Proveedor</label><input type="text" id="vg_proveedor" placeholder="Se completa solo al leer el comprobante"></div>
+            <div class="form-group"><label>Nro. de factura</label><input type="text" id="vg_nroFactura" placeholder="Se completa solo al leer el comprobante"></div>
           </div>
-          <div class="form-group" style="margin-top:10px"><label>Comentarios</label><input type="text" id="vg_comentarios" placeholder="Ej: pagué por otro, adjunto transferencia"></div>
+          <div class="form-group" style="margin-top:10px"><label>Comentarios / Detalle <span style="color:var(--red)">*</span></label><input type="text" id="vg_comentarios" placeholder="Ej: pagué por otro, adjunto transferencia"></div>
+          <div style="margin-top:10px">
+            <label style="font-size:12px;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:0.4px">Foto del comprobante de este gasto (opcional)</label>
+            <p style="font-size:11px;color:var(--gray-400);margin:2px 0 6px">Subila y completamos fecha, importe, proveedor y nro. de factura automáticamente.</p>
+            <input type="file" id="vg_gastoComprobanteFile" accept=".pdf,.jpg,.jpeg,.png" onchange="window.leerYAdjuntarComprobanteGasto(this,'vg')">
+            <div id="vg_ocrStatus" style="font-size:12px;color:var(--gray-600);margin-top:6px"></div>
+          </div>
           <div style="margin-top:12px;display:flex;align-items:center;gap:8px">
             <input type="checkbox" id="vg_tienePropina" onchange="window.toggleVGPropina()">
             <label style="text-transform:none;font-size:13px;font-weight:600;color:var(--gray-800)">¿Este gasto incluyó propina?</label>
@@ -313,16 +340,14 @@
       </div>
       <div class="card">
         <div class="card-title"><div class="icon">📎</div> Adjuntar comprobantes (opcional)</div>
-        <p style="font-size:13px;color:var(--gray-600);margin-bottom:14px">Adjuntá tickets, facturas u otros comprobantes. Máx. 5MB.</p>
+        <p style="font-size:13px;color:var(--gray-600);margin-bottom:6px">Adjuntá tickets, facturas u otros comprobantes. Máx. 5MB por archivo.</p>
+        <p style="font-size:12px;color:var(--gray-600);margin-bottom:14px;font-style:italic">Subí una foto por cada comprobante — no juntes varios tickets o facturas en una sola foto.</p>
         <div class="upload-zone" id="vUploadZone" onclick="document.getElementById('vFileInput').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleVDrop(event)">
-          <div class="upload-icon">📎</div><p><strong>Hacé clic</strong> o arrastrá el archivo aquí</p>
-          <p style="font-size:11px;margin-top:4px;color:var(--gray-400)">Opcional — PDF, JPG o PNG — máx. 5MB</p>
+          <div class="upload-icon">📎</div><p><strong>Hacé clic</strong> o arrastrá los archivos aquí</p>
+          <p style="font-size:11px;margin-top:4px;color:var(--gray-400)">Opcional — PDF, JPG o PNG — máx. 5MB por archivo — podés elegir varios</p>
         </div>
-        <input type="file" id="vFileInput" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleVFileInput(this)">
-        <div id="vFilePreview" style="display:none" class="file-preview">
-          <span style="font-size:20px">📄</span><span class="file-name" id="vFileName"></span><span class="file-size" id="vFileSize"></span>
-          <button class="remove-file" onclick="removeVFile()">✕</button>
-        </div>
+        <input type="file" id="vFileInput" accept=".pdf,.jpg,.jpeg,.png" multiple style="display:none" onchange="handleVFileInput(this)">
+        <div id="vFilePreviewList"></div>
       </div>
       <div class="card">
         <div class="card-title"><div class="icon">💬</div> Observaciones</div>
@@ -352,6 +377,75 @@ import { getFirestore, collection, addDoc, doc, updateDoc, orderBy, onSnapshot, 
 
 emailjs.init("jf6Oi8cC6ByyRQ8SN");
 
+// ---- Supabase (almacenamiento de fotos de comprobantes) ----
+const SUPABASE_URL = "https://yoqfbnmujmwvhrtbmmav.supabase.co";
+const SUPABASE_KEY = "sb_publishable_bABSUVYehi4nrWY-c8-MXA_1CWVQ-_P";
+const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_BUCKET = "comprobantes";
+
+// URL de la función de lectura de comprobantes (Netlify). Se actualiza una vez publicada.
+const OCR_FUNCTION_URL = "https://granger-rendiciones-ocr.netlify.app/.netlify/functions/extraer-comprobante";
+
+function leerArchivoComoDataURL(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result||''));
+    reader.onerror=()=>reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function subirComprobanteASupabase(file){
+  const path=`${Date.now()}_${Math.random().toString(36).slice(2)}_${file.name}`.replace(/[^\w.\-]+/g,'_');
+  const {error}=await supa.storage.from(SUPABASE_BUCKET).upload(path,file,{cacheControl:'3600',upsert:false});
+  if(error)throw error;
+  const {data}=supa.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
+  return data.publicUrl;
+}
+
+async function leerComprobanteConIA(dataUrl){
+  const resp=await fetch(OCR_FUNCTION_URL,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({dataUrl})});
+  const texto=await resp.text();
+  let json=null;try{json=JSON.parse(texto);}catch(e){}
+  if(!resp.ok){
+    const detalle=json&&json.error?json.error+(json.detalle?': '+JSON.stringify(json.detalle):''):texto.slice(0,300);
+    throw new Error(detalle||('HTTP '+resp.status));
+  }
+  return json||{};
+}
+
+let comprobantePendienteGasto=null, comprobantePendienteVGasto=null;
+window.leerYAdjuntarComprobanteGasto=async function(input,prefijo){
+  const file=input.files[0];
+  if(!file)return;
+  if(file.size>5*1024*1024){showToast('El archivo supera los 5MB','error');input.value='';return;}
+  const statusEl=document.getElementById(prefijo+'_ocrStatus');
+  statusEl.textContent='⏳ Subiendo y leyendo comprobante con IA...';
+  try{
+    const [dataUrl,url]=await Promise.all([leerArchivoComoDataURL(file),subirComprobanteASupabase(file)]);
+    const info={name:file.name,size:file.size,type:file.type,url};
+    if(prefijo==='g')comprobantePendienteGasto=info;else comprobantePendienteVGasto=info;
+    statusEl.innerHTML=`✅ ${file.name} adjuntado — leyendo datos...`;
+    try{
+      const extraido=await leerComprobanteConIA(dataUrl);
+      if(extraido.fecha)document.getElementById(prefijo+'_fecha').value=extraido.fecha;
+      if(extraido.importe!=null){
+        const imp=document.getElementById(prefijo+'_importe');
+        imp.value=String(extraido.importe).replace('.',',');
+        window.formatARInput(imp);
+      }
+      if(extraido.proveedor)document.getElementById(prefijo+'_proveedor').value=extraido.proveedor;
+      if(extraido.numeroFactura)document.getElementById(prefijo+'_nroFactura').value=extraido.numeroFactura;
+      statusEl.innerHTML=`✅ ${file.name} — datos completados, revisá antes de guardar.`;
+    }catch(e){
+      statusEl.innerHTML=`✅ ${file.name} adjuntado (no se pudieron leer los datos automáticamente, completá a mano).<br><span style="color:var(--red);font-size:11px">Detalle: ${String(e.message||e).slice(0,300)}</span>`;
+    }
+  }catch(e){
+    statusEl.textContent='❌ Error al subir el comprobante: '+(e.message||e);
+    if(prefijo==='g')comprobantePendienteGasto=null;else comprobantePendienteVGasto=null;
+  }
+};
+
 const firebaseConfig = {
   apiKey: "AIzaSyCFHIU_4O-NiwFccMqZafLbRWndXmMBjX8",
   authDomain: "rendicion-gastos-6a46c.firebaseapp.com",
@@ -364,7 +458,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const CATEGORIAS_ICON = {'Combustible/Peajes':'⛽','Alojamiento':'🏨','Comidas en viaje':'🍽️','Transporte urbano':'🚗','Servicios digitales':'💻','Otros':'📦'};
-let gastos=[], attachedFile=null, vGastos=[], vAttachedFile=null;
+let gastos=[], attachedFiles=[], vGastos=[], vAttachedFiles=[];
 let tUnsubscribe=null, vUnsubscribe=null;
 
 function fmt(n){return Number(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});}
@@ -422,7 +516,11 @@ window.switchTab=function(tab,btn){
   document.querySelectorAll('#viewTarjeta .tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
   document.getElementById('t-nueva').style.display=tab==='t-nueva'?'':'none';
   document.getElementById('t-historial').style.display=tab==='t-historial'?'':'none';
-  if(tab==='t-historial')iniciarHistorial();
+  if(tab==='t-historial'){
+    const sel=document.getElementById('titularHistorialSelect');
+    if(!sel.value)sel.value=localStorage.getItem('ultimoTitular')||document.getElementById('titularSelect').value||'';
+    iniciarHistorial();
+  }
 };
 
 window.switchVTab=function(tab,btn){
@@ -458,13 +556,19 @@ window.agregarGasto=function(){
   const fecha=document.getElementById('g_fecha').value,desc=document.getElementById('g_desc').value.trim(),
     importe=parseARNumber(document.getElementById('g_importe').value),moneda=document.getElementById('g_moneda').value,
     categoria=document.getElementById('g_categoria').value,factura=document.getElementById('g_factura').value,
-    obs=document.getElementById('g_obs').value.trim();
+    obs=document.getElementById('g_obs').value.trim(),
+    proveedor=document.getElementById('g_proveedor').value.trim(),
+    nroFactura=document.getElementById('g_nroFactura').value.trim();
   if(!fecha){showToast('Ingresá la fecha','error');return;}
   if(!desc){showToast('Ingresá la descripción','error');return;}
   if(!importe||importe<=0){showToast('Ingresá un importe válido','error');return;}
-  gastos.push({id:Date.now(),fecha,desc,importe,moneda,categoria,factura,obs});
+  if(!obs){showToast('Completá la observación del gasto','error');return;}
+  gastos.push({id:Date.now(),fecha,desc,importe,moneda,categoria,factura,obs,proveedor,nroFactura,comprobante:comprobantePendienteGasto});
+  comprobantePendienteGasto=null;
   renderGastos();
-  ['g_fecha','g_desc','g_importe','g_obs'].forEach(id=>document.getElementById(id).value='');
+  ['g_fecha','g_desc','g_importe','g_obs','g_proveedor','g_nroFactura'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('g_gastoComprobanteFile').value='';
+  document.getElementById('g_ocrStatus').textContent='';
   showToast('Gasto agregado ✓','success');
 };
 window.eliminarGasto=function(id){gastos=gastos.filter(g=>g.id!==id);renderGastos();};
@@ -475,30 +579,63 @@ function renderGastos(){
   list.innerHTML=gastos.map(g=>{if(g.moneda==='ARS')tARS+=g.importe;else tUSD+=g.importe;const icon=CATEGORIAS_ICON[g.categoria]||'📦';return `<div class="gasto-row"><span style="font-size:12px;color:var(--gray-600)">${formatDate(g.fecha)}</span><span>${icon} <strong>${g.desc}</strong>${g.obs?`<br><span style="font-size:11px;color:var(--gray-400)">${g.obs}</span>`:''}</span><span style="font-weight:700">${g.moneda==='ARS'?'$':'USD '}${fmt(g.importe)}</span><span style="font-size:11px;color:var(--gray-600)">${g.moneda}</span><span style="font-size:11px">${g.factura==='Sí, a nombre de Granger S.A.'?'✅ Factura':g.factura==='Ticket/comprobante'?'🧾 Ticket':'⚠️ Sin comp.'}</span><span style="font-size:11px;color:var(--gray-600)">${g.categoria}</span><button class="remove-btn" onclick="eliminarGasto(${g.id})">✕</button></div>`;}).join('');
   document.getElementById('totalARS').textContent='$'+fmt(tARS);document.getElementById('totalUSD').textContent='USD '+fmt(tUSD);
 }
-window.handleFileInput=function(input){const file=input.files[0];if(!file)return;if(file.size>5*1024*1024){showToast('El archivo supera los 5MB','error');return;}const reader=new FileReader();reader.onload=e=>{attachedFile={name:String(file.name||'archivo'),size:Number(file.size||0),type:String(file.type||'application/octet-stream'),data:String(e.target.result||'')};document.getElementById('filePreview').style.display='flex';document.getElementById('fileName').textContent=file.name;document.getElementById('fileSize').textContent=formatFileSize(file.size);document.getElementById('uploadZone').style.display='none';};reader.onerror=()=>{showToast('Error al leer el archivo','error');};reader.readAsDataURL(file);};
-window.handleDrop=function(e){e.preventDefault();document.getElementById('uploadZone').classList.remove('dragover');const f=e.dataTransfer.files[0];if(f){const dt=new DataTransfer();dt.items.add(f);document.getElementById('fileInput').files=dt.files;window.handleFileInput(document.getElementById('fileInput'));}};
-window.removeFile=function(){attachedFile=null;document.getElementById('fileInput').value='';document.getElementById('filePreview').style.display='none';document.getElementById('uploadZone').style.display='';};
+function renderFilePreviews(){
+  const c=document.getElementById('filePreviewList');
+  c.innerHTML=attachedFiles.map(f=>`<div class="file-preview" style="display:flex">
+    <span style="font-size:20px">${f.subiendo?'⏳':'📄'}</span><span class="file-name">${f.name}${f.subiendo?' — subiendo...':''}</span><span class="file-size">${formatFileSize(f.size)}</span>
+    <button class="remove-file" onclick="removeFile('${f.id}')">✕</button>
+  </div>`).join('');
+}
+window.handleFileInput=async function(input){
+  const files=Array.from(input.files||[]);
+  if(!files.length)return;
+  for(const file of files){
+    if(file.size>5*1024*1024){showToast(`"${file.name}" supera los 5MB`,'error');continue;}
+    const tempId='pend_'+Date.now()+Math.random();
+    attachedFiles.push({id:tempId,name:file.name,size:file.size,type:file.type,url:null,subiendo:true});
+    renderFilePreviews();
+    try{
+      const url=await subirComprobanteASupabase(file);
+      const item=attachedFiles.find(f=>f.id===tempId);
+      if(item){item.url=url;item.subiendo=false;}
+      renderFilePreviews();
+    }catch(e){
+      attachedFiles=attachedFiles.filter(f=>f.id!==tempId);
+      showToast(`Error al subir "${file.name}"`,'error');
+      renderFilePreviews();
+    }
+  }
+  input.value='';
+};
+window.handleDrop=function(e){e.preventDefault();document.getElementById('uploadZone').classList.remove('dragover');if(e.dataTransfer.files.length){const dt=new DataTransfer();Array.from(e.dataTransfer.files).forEach(f=>dt.items.add(f));document.getElementById('fileInput').files=dt.files;window.handleFileInput(document.getElementById('fileInput'));}};
+window.removeFile=function(id){attachedFiles=attachedFiles.filter(f=>f.id!=id);renderFilePreviews();};
 window.enviarRendicion=async function(){
   const titular=document.getElementById('titularSelect').value,periodo=document.getElementById('periodoSelect').value,obs=document.getElementById('obsGenerales').value.trim();
   if(!titular){showToast('Seleccioná tu nombre','error');return;}
   if(!gastos.length){showToast('Agregá al menos un gasto','error');return;}
+  if(attachedFiles.some(f=>f.subiendo)){showToast('Esperá a que terminen de subir los archivos','error');return;}
   const totalARS=gastos.filter(g=>g.moneda==='ARS').reduce((s,g)=>s+g.importe,0);
   const totalUSD=gastos.filter(g=>g.moneda==='USD').reduce((s,g)=>s+g.importe,0);
   document.getElementById('btnEnviar').disabled=true;document.getElementById('sendingMsg').style.display='';
   try{
-    await addDoc(collection(db,'rendiciones'),{tipo:'tarjeta',titular,periodo,gastos:[...gastos],adjunto:attachedFile,obs,totalARS,totalUSD,sinComp:gastos.filter(g=>g.factura==='No').length,estado:'pendiente',fechaEnvio:new Date().toISOString(),comentarioAdmin:'',respuestaTitular:''});
+    await addDoc(collection(db,'rendiciones'),{tipo:'tarjeta',titular,periodo,gastos:[...gastos],adjuntos:[...attachedFiles],obs,totalARS,totalUSD,sinComp:gastos.filter(g=>g.factura==='No').length,estado:'pendiente',fechaEnvio:new Date().toISOString(),comentarioAdmin:'',respuestaTitular:''});
     const detalle=gastos.map(g=>`• ${formatDate(g.fecha)} — ${g.desc}: ${g.moneda==='ARS'?'$':'USD '}${fmt(g.importe)}`).join('\n');
     await enviarEmail(titular,'Tarjeta Corporativa',periodo,`ARS $${fmt(totalARS)}${totalUSD>0?' + USD '+fmt(totalUSD):''}`,detalle);
-    gastos=[];attachedFile=null;renderGastos();window.removeFile();document.getElementById('obsGenerales').value='';document.getElementById('titularSelect').value='';
+    gastos=[];attachedFiles=[];renderGastos();renderFilePreviews();document.getElementById('obsGenerales').value='';document.getElementById('titularSelect').value='';
     showToast('Rendición enviada ✓','success');
     window.switchTab('t-historial',document.querySelectorAll('#viewTarjeta .tab-btn')[1]);
   }catch(e){showToast('Error: '+e.message,'error');}
   document.getElementById('btnEnviar').disabled=false;document.getElementById('sendingMsg').style.display='none';
 };
-window.limpiarForm=function(){gastos=[];renderGastos();window.removeFile();document.getElementById('obsGenerales').value='';document.getElementById('titularSelect').value='';};
+window.limpiarForm=function(){gastos=[];renderGastos();attachedFiles=[];renderFilePreviews();document.getElementById('obsGenerales').value='';document.getElementById('titularSelect').value='';};
+window.onCambiarTitularHistorial=function(){
+  localStorage.setItem('ultimoTitular',document.getElementById('titularHistorialSelect').value);
+  iniciarHistorial();
+};
 function iniciarHistorial(){
   if(tUnsubscribe)tUnsubscribe();
-  const titular=document.getElementById('titularSelect').value;
+  const titular=document.getElementById('titularHistorialSelect').value;
+  if(!titular){document.getElementById('historialContainer').innerHTML='<div class="empty-state"><div class="empty-icon">📭</div><p>Seleccioná tu nombre para ver tus rendiciones.</p></div>';return;}
   tUnsubscribe=onSnapshot(query(collection(db,'rendiciones'),orderBy('fechaEnvio','desc')),(snap)=>{
     const mias=snap.docs.map(d=>{const data=d.data();return{fbId:d.id,...data};}).filter(r=>r.tipo==='tarjeta'&&r.titular===titular);
     const c=document.getElementById('historialContainer');
@@ -522,18 +659,24 @@ window.agregarVGasto=function(){
   if(!fecha){showToast('Ingresá la fecha','error');return;}
   if(!concepto){showToast('Ingresá el concepto','error');return;}
   if(!importe||importe<=0){showToast('Ingresá un importe válido','error');return;}
+  if(!comentarios){showToast('Completá el detalle/comentario del gasto','error');return;}
   const tienePropina=document.getElementById('vg_tienePropina').checked;
   const importePropina=tienePropina?parseARNumber(document.getElementById('vg_importePropina').value):0;
   if(tienePropina&&importePropina<=0){showToast('Ingresá el importe de la propina','error');return;}
-  vGastos.push({id:Date.now(),fecha,concepto,importe,facturado,metodo,link,comentarios});
+  const proveedor=document.getElementById('vg_proveedor').value.trim(),
+    nroFactura=document.getElementById('vg_nroFactura').value.trim();
+  vGastos.push({id:Date.now(),fecha,concepto,importe,facturado,metodo,link,comentarios,proveedor,nroFactura,comprobante:comprobantePendienteVGasto});
+  comprobantePendienteVGasto=null;
   // Según el procedimiento de viáticos, la propina se carga como un gasto independiente con concepto "Propina".
   if(tienePropina&&importePropina>0){
-    vGastos.push({id:Date.now()+1,fecha,concepto:'Propina',importe:importePropina,facturado,metodo,link:'',comentarios:`Propina sobre: ${concepto}`});
+    vGastos.push({id:Date.now()+1,fecha,concepto:'Propina',importe:importePropina,facturado,metodo,link:'',comentarios:`Propina sobre: ${concepto}`,proveedor:'',nroFactura:'',comprobante:null});
   }
   renderVGastos();
-  ['vg_fecha','vg_concepto','vg_importe','vg_link','vg_comentarios','vg_importePropina'].forEach(id=>document.getElementById(id).value='');
+  ['vg_fecha','vg_concepto','vg_importe','vg_link','vg_comentarios','vg_importePropina','vg_proveedor','vg_nroFactura'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('vg_tienePropina').checked=false;
   document.getElementById('vgPropinaWrap').style.display='none';
+  document.getElementById('vg_gastoComprobanteFile').value='';
+  document.getElementById('vg_ocrStatus').textContent='';
   showToast(tienePropina?'Gasto y propina agregados ✓':'Gasto agregado ✓','success');
 };
 window.eliminarVGasto=function(id){vGastos=vGastos.filter(g=>g.id!==id);renderVGastos();};
@@ -543,35 +686,76 @@ function renderVGastos(){
   header.style.display='';totalRow.style.display='';let total=0;
   list.innerHTML=vGastos.map(g=>{total+=g.importe;return `<div class="gasto-row"><span style="font-size:12px;color:var(--gray-600)">${formatDate(g.fecha)}</span><span><strong>${g.concepto}</strong>${g.comentarios?`<br><span style="font-size:11px;color:var(--gray-400)">${g.comentarios}</span>`:''}</span><span style="font-weight:700">$${fmt(g.importe)}</span><span style="font-size:11px;color:var(--gray-600)">${g.facturado}</span><span style="font-size:11px">${g.metodo==='REINTEGRO'?'🔄 Reintegro':'💰 Adelanto'}</span><span style="font-size:11px">${g.link?`<a href="${g.link}" target="_blank" style="color:var(--black);text-decoration:underline">Ver</a>`:'—'}</span><button class="remove-btn" onclick="eliminarVGasto(${g.id})">✕</button></div>`;}).join('');
   document.getElementById('vTotalARS').textContent='$'+fmt(total);
+  if(window.actualizarSaldoEfectivo)window.actualizarSaldoEfectivo();
 }
-window.calcKm=function(){const km=parseFloat(document.getElementById('v_km').value)||0;const val=parseARNumber(document.getElementById('v_valorKm').value)||0;document.getElementById('kmResult').style.display=km>0?'':'none';document.getElementById('kmImporte').textContent='$'+fmt(km*val);};
-window.handleVFileInput=function(input){const file=input.files[0];if(!file)return;if(file.size>5*1024*1024){showToast('El archivo supera los 5MB','error');return;}const reader=new FileReader();reader.onload=e=>{vAttachedFile={name:String(file.name||'archivo'),size:Number(file.size||0),type:String(file.type||'application/octet-stream'),data:String(e.target.result||'')};document.getElementById('vFilePreview').style.display='flex';document.getElementById('vFileName').textContent=file.name;document.getElementById('vFileSize').textContent=formatFileSize(file.size);document.getElementById('vUploadZone').style.display='none';};reader.onerror=()=>{showToast('Error al leer el archivo','error');};reader.readAsDataURL(file);};
-window.handleVDrop=function(e){e.preventDefault();document.getElementById('vUploadZone').classList.remove('dragover');const f=e.dataTransfer.files[0];if(f){const dt=new DataTransfer();dt.items.add(f);document.getElementById('vFileInput').files=dt.files;window.handleVFileInput(document.getElementById('vFileInput'));}};
-window.removeVFile=function(){vAttachedFile=null;document.getElementById('vFileInput').value='';document.getElementById('vFilePreview').style.display='none';document.getElementById('vUploadZone').style.display='';};
+window.calcKm=function(){const km=parseFloat(document.getElementById('v_km').value)||0;const val=parseARNumber(document.getElementById('v_valorKm').value)||0;document.getElementById('kmResult').style.display=km>0?'':'none';document.getElementById('kmImporte').textContent='$'+fmt(km*val);if(window.actualizarSaldoEfectivo)window.actualizarSaldoEfectivo();};
+function renderVFilePreviews(){
+  const c=document.getElementById('vFilePreviewList');
+  c.innerHTML=vAttachedFiles.map(f=>`<div class="file-preview" style="display:flex">
+    <span style="font-size:20px">${f.subiendo?'⏳':'📄'}</span><span class="file-name">${f.name}${f.subiendo?' — subiendo...':''}</span><span class="file-size">${formatFileSize(f.size)}</span>
+    <button class="remove-file" onclick="removeVFile('${f.id}')">✕</button>
+  </div>`).join('');
+}
+window.handleVFileInput=async function(input){
+  const files=Array.from(input.files||[]);
+  if(!files.length)return;
+  for(const file of files){
+    if(file.size>5*1024*1024){showToast(`"${file.name}" supera los 5MB`,'error');continue;}
+    const tempId='pend_'+Date.now()+Math.random();
+    vAttachedFiles.push({id:tempId,name:file.name,size:file.size,type:file.type,url:null,subiendo:true});
+    renderVFilePreviews();
+    try{
+      const url=await subirComprobanteASupabase(file);
+      const item=vAttachedFiles.find(f=>f.id===tempId);
+      if(item){item.url=url;item.subiendo=false;}
+      renderVFilePreviews();
+    }catch(e){
+      vAttachedFiles=vAttachedFiles.filter(f=>f.id!==tempId);
+      showToast(`Error al subir "${file.name}"`,'error');
+      renderVFilePreviews();
+    }
+  }
+  input.value='';
+};
+window.handleVDrop=function(e){e.preventDefault();document.getElementById('vUploadZone').classList.remove('dragover');if(e.dataTransfer.files.length){const dt=new DataTransfer();Array.from(e.dataTransfer.files).forEach(f=>dt.items.add(f));document.getElementById('vFileInput').files=dt.files;window.handleVFileInput(document.getElementById('vFileInput'));}};
+window.removeVFile=function(id){vAttachedFiles=vAttachedFiles.filter(f=>f.id!=id);renderVFilePreviews();};
 window.enviarViatico=async function(){
   const nombre=document.getElementById('v_nombre').value.trim(),area=document.getElementById('v_area').value,
     fechas=document.getElementById('v_fechas').value.trim(),motivo=document.getElementById('v_motivo').value.trim(),obs=document.getElementById('vObs').value.trim();
   const recibioEfectivo=document.getElementById('v_recibioEfectivo').value,
     importeEfectivo=recibioEfectivo==='Si'?(parseARNumber(document.getElementById('v_importeEfectivo').value)||0):0;
-  if(!nombre){showToast('Ingresá tu nombre','error');return;}if(!area){showToast('Seleccioná el área','error');return;}if(!fechas){showToast('Ingresá las fechas','error');return;}if(!vGastos.length){showToast('Agregá al menos un gasto','error');return;}
+  if(!nombre){showToast('Ingresá tu nombre','error');return;}if(!area){showToast('Seleccioná el área','error');return;}if(!fechas){showToast('Ingresá las fechas','error');return;}if(!motivo){showToast('Ingresá el motivo del viaje','error');return;}if(!vGastos.length){showToast('Agregá al menos un gasto','error');return;}if(vAttachedFiles.some(f=>f.subiendo)){showToast('Esperá a que terminen de subir los archivos','error');return;}
   const km=parseFloat(document.getElementById('v_km').value)||0,valorKm=parseARNumber(document.getElementById('v_valorKm').value)||501.05,kmImporte=km*valorKm;
   const totalARS=vGastos.reduce((s,g)=>s+g.importe,0)+kmImporte;
   document.getElementById('vBtnEnviar').disabled=true;document.getElementById('vSendingMsg').style.display='';
   try{
-    await addDoc(collection(db,'rendiciones'),{tipo:'viaticos',titular:nombre,area,fechasViaje:fechas,motivo,gastos:[...vGastos],km,valorKm,kmImporte,totalGastos:totalARS-kmImporte,totalARS,recibioEfectivo:recibioEfectivo==='Si',importeEfectivo,adjunto:vAttachedFile,obs,estado:'pendiente',fechaEnvio:new Date().toISOString(),comentarioAdmin:'',respuestaTitular:''});
+    await addDoc(collection(db,'rendiciones'),{tipo:'viaticos',titular:nombre,area,fechasViaje:fechas,motivo,gastos:[...vGastos],km,valorKm,kmImporte,totalGastos:totalARS-kmImporte,totalARS,recibioEfectivo:recibioEfectivo==='Si',importeEfectivo,adjuntos:[...vAttachedFiles],obs,estado:'pendiente',fechaEnvio:new Date().toISOString(),comentarioAdmin:'',respuestaTitular:''});
     const detalle=vGastos.map(g=>`• ${formatDate(g.fecha)} — ${g.concepto}: $${fmt(g.importe)} (${g.metodo})`).join('\n')+(km>0?`\n• Kilometraje: ${km} km = $${fmt(kmImporte)}`:'' );
     await enviarEmail(nombre,'Viáticos',`${fechas} — ${motivo}`,'$'+fmt(totalARS),detalle);
     const responsable=buscarResponsableDeEmpleado(nombre);
     if(responsable)await enviarEmailResponsable(responsable,nombre,`${fechas} — ${motivo}`,'$'+fmt(totalARS),detalle);
-    vGastos=[];vAttachedFile=null;renderVGastos();window.removeVFile();
-    ['v_nombre','v_fechas','v_motivo','vObs','v_km','v_importeEfectivo'].forEach(id=>document.getElementById(id).value='');document.getElementById('v_area').value='';document.getElementById('v_recibioEfectivo').value='No';document.getElementById('vEfectivoImporteWrap').style.display='none';document.getElementById('kmResult').style.display='none';
+    vGastos=[];vAttachedFiles=[];renderVGastos();renderVFilePreviews();
+    ['v_nombre','v_fechas','v_motivo','vObs','v_km','v_importeEfectivo'].forEach(id=>document.getElementById(id).value='');document.getElementById('v_area').value='';document.getElementById('v_recibioEfectivo').value='No';document.getElementById('vEfectivoImporteWrap').style.display='none';document.getElementById('saldoEfectivoResult').style.display='none';document.getElementById('kmResult').style.display='none';
     showToast('Rendición enviada ✓','success');
     window.switchVTab('v-historial',document.querySelectorAll('#viewViaticos .tab-btn')[1]);
   }catch(e){showToast('Error: '+e.message,'error');}
   document.getElementById('vBtnEnviar').disabled=false;document.getElementById('vSendingMsg').style.display='none';
 };
-window.toggleVEfectivo=function(){const v=document.getElementById('v_recibioEfectivo').value;document.getElementById('vEfectivoImporteWrap').style.display=v==='Si'?'':'none';if(v!=='Si')document.getElementById('v_importeEfectivo').value='';};
-window.limpiarVForm=function(){vGastos=[];renderVGastos();window.removeVFile();['v_nombre','v_area','v_fechas','v_motivo','vObs','v_km','v_importeEfectivo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('v_recibioEfectivo').value='No';document.getElementById('vEfectivoImporteWrap').style.display='none';document.getElementById('kmResult').style.display='none';};
+window.toggleVEfectivo=function(){const v=document.getElementById('v_recibioEfectivo').value;document.getElementById('vEfectivoImporteWrap').style.display=v==='Si'?'':'none';if(v!=='Si')document.getElementById('v_importeEfectivo').value='';window.actualizarSaldoEfectivo();};
+window.actualizarSaldoEfectivo=function(){
+  const recibio=document.getElementById('v_recibioEfectivo').value;
+  const resultEl=document.getElementById('saldoEfectivoResult');
+  if(recibio!=='Si'){resultEl.style.display='none';return;}
+  const importeEfectivo=parseARNumber(document.getElementById('v_importeEfectivo').value)||0;
+  const km=parseFloat(document.getElementById('v_km').value)||0,valorKm=parseARNumber(document.getElementById('v_valorKm').value)||501.05;
+  const totalGastado=vGastos.reduce((s,g)=>s+g.importe,0)+(km*valorKm);
+  const saldo=importeEfectivo-totalGastado;
+  resultEl.style.display='';
+  if(saldo>0.005){resultEl.innerHTML=`<span style="font-size:13px;color:var(--gray-600)">Saldo a devolver a Administración: </span><span style="font-size:15px;font-weight:800;color:var(--red)">$${fmt(saldo)}</span>`;}
+  else if(saldo<-0.005){resultEl.innerHTML=`<span style="font-size:13px;color:var(--gray-600)">Gastaste más de lo recibido — a reintegrarte: </span><span style="font-size:15px;font-weight:800;color:var(--black)">$${fmt(Math.abs(saldo))}</span>`;}
+  else{resultEl.innerHTML=`<span style="font-size:13px;color:var(--gray-600)">Sin saldo pendiente — el efectivo recibido cubre exactamente lo gastado.</span>`;}
+};
+window.limpiarVForm=function(){vGastos=[];renderVGastos();vAttachedFiles=[];renderVFilePreviews();['v_nombre','v_area','v_fechas','v_motivo','vObs','v_km','v_importeEfectivo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('v_recibioEfectivo').value='No';document.getElementById('vEfectivoImporteWrap').style.display='none';document.getElementById('saldoEfectivoResult').style.display='none';document.getElementById('kmResult').style.display='none';};
 function iniciarVHistorial(){
   if(vUnsubscribe)vUnsubscribe();
   vUnsubscribe=onSnapshot(query(collection(db,'rendiciones'),orderBy('fechaEnvio','desc')),(snap)=>{
