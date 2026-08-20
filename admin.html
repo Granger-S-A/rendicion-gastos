@@ -358,22 +358,42 @@ window.salirSesion=function(){
   renderAdmin();
 };
 
-function adjuntoHTML(r){
-  if(!r.adjunto)return'<span style="color:var(--gray-400)">Sin adjunto</span>';
-  if(!r.adjunto.data)return`📎 ${r.adjunto.name}`;
-  return`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-    <span style="font-weight:600">📎 ${r.adjunto.name}</span>
-    <span style="font-size:11px;color:var(--gray-400)">${formatFileSize(r.adjunto.size)}</span>
-    <a href="${r.adjunto.data}" download="${r.adjunto.name}" style="font-size:12px;font-weight:600;text-decoration:underline;color:var(--black)">⬇ Descargar</a>
-    ${r.adjunto.type==='application/pdf'?`<button onclick="openBlob('${r.fbId}')" style="font-size:12px;background:none;border:none;cursor:pointer;font-weight:600;text-decoration:underline;padding:0">🔍 Ver PDF</button>`:''}
-    ${r.adjunto.type&&r.adjunto.type.startsWith('image/')?`<br><img src="${r.adjunto.data}" style="max-width:100%;max-height:220px;border-radius:6px;margin-top:8px;border:1px solid var(--gray-200)"/>`:''}
+function listaAdjuntos(r){
+  if(Array.isArray(r.adjuntos))return r.adjuntos.filter(Boolean);
+  if(r.adjunto)return[r.adjunto];
+  return[];
+}
+function unAdjuntoHTML(a,fbId,idx){
+  const src=a.url||a.data;
+  if(!src)return`📎 ${a.name}${a.subiendo?' (subiendo...)':''}`;
+  return`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+    <span style="font-weight:600">📎 ${a.name}</span>
+    <span style="font-size:11px;color:var(--gray-400)">${formatFileSize(a.size)}</span>
+    <a href="${src}" download="${a.name}" target="_blank" style="font-size:12px;font-weight:600;text-decoration:underline;color:var(--black)">⬇ Descargar</a>
+    ${a.type==='application/pdf'&&a.data?`<button onclick="openBlob('${fbId}',${idx})" style="font-size:12px;background:none;border:none;cursor:pointer;font-weight:600;text-decoration:underline;padding:0">🔍 Ver PDF</button>`:''}
+    ${a.type&&a.type.startsWith('image/')?`<br><img src="${src}" style="max-width:100%;max-height:220px;border-radius:6px;margin-top:8px;border:1px solid var(--gray-200)"/>`:''}
   </div>`;
 }
+function saldoEfectivoHTML(r){
+  if(!r.recibioEfectivo)return'';
+  const totalGastado=(r.totalARS||0);
+  const saldo=(r.importeEfectivo||0)-totalGastado;
+  if(saldo>0.005)return`Debe devolver <strong style="color:var(--red)">$${fmt(saldo)}</strong> a Administración`;
+  if(saldo<-0.005)return`Se le debe reintegrar <strong>$${fmt(Math.abs(saldo))}</strong>`;
+  return'Sin saldo pendiente';
+}
+function adjuntoHTML(r){
+  const lista=listaAdjuntos(r);
+  if(!lista.length)return'<span style="color:var(--gray-400)">Sin adjunto</span>';
+  return lista.map((a,idx)=>unAdjuntoHTML(a,r.fbId,idx)).join('');
+}
 
-window.openBlob=function(fbId){
+window.openBlob=function(fbId,idx){
   const r=todasRendiciones.find(x=>x.fbId===fbId);
-  if(!r||!r.adjunto||!r.adjunto.data){showToast('No hay archivo','error');return;}
-  try{const by=atob(r.adjunto.data.split(',')[1]);const ab=new ArrayBuffer(by.length);const ia=new Uint8Array(ab);for(let i=0;i<by.length;i++)ia[i]=by.charCodeAt(i);const blob=new Blob([ab],{type:r.adjunto.type});const url=URL.createObjectURL(blob);window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),10000);}catch(e){showToast('Error','error');}
+  const lista=r?listaAdjuntos(r):[];
+  const a=lista[idx||0];
+  if(!a||!a.data){showToast('No hay archivo','error');return;}
+  try{const by=atob(a.data.split(',')[1]);const ab=new ArrayBuffer(by.length);const ia=new Uint8Array(ab);for(let i=0;i<by.length;i++)ia[i]=by.charCodeAt(i);const blob=new Blob([ab],{type:a.type});const url=URL.createObjectURL(blob);window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),10000);}catch(e){showToast('Error','error');}
 };
 
 window.switchAdminTab=function(tab,btn){
@@ -430,8 +450,8 @@ window.renderAdmin=function(){
         <div class="detail-item"><div class="d-label">Adjunto</div><div class="d-value">${adjuntoHTML(r)}</div></div>
         ${r.obs?`<div class="detail-item" style="grid-column:1/-1"><div class="d-label">Observaciones</div><div class="d-value">${r.obs}</div></div>`:''}
       </div>
-      <table class="mini-gastos"><thead><tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th>Comprobante</th><th style="text-align:right">Importe</th></tr></thead><tbody>
-        ${(r.gastos||[]).map(g=>`<tr><td style="font-size:12px;color:var(--gray-600)">${formatDate(g.fecha)}</td><td>${g.desc}${g.obs?`<br><span style="font-size:11px;color:var(--gray-400)">${g.obs}</span>`:''}</td><td style="font-size:12px;color:var(--gray-600)">${g.categoria}</td><td style="font-size:12px">${g.factura==='Sí, a nombre de Granger S.A.'?'✅':g.factura==='Ticket/comprobante'?'🧾':'⚠️'} ${g.factura}</td><td class="td-amount">${g.moneda==='ARS'?'$':'USD '}${fmt(g.importe)}</td></tr>`).join('')}
+      <table class="mini-gastos"><thead><tr><th>Fecha</th><th>Descripción</th><th>Proveedor / Factura</th><th>Categoría</th><th>Comprobante</th><th style="text-align:right">Importe</th></tr></thead><tbody>
+        ${(r.gastos||[]).map(g=>`<tr><td style="font-size:12px;color:var(--gray-600)">${formatDate(g.fecha)}</td><td>${g.desc}${g.obs?`<br><span style="font-size:11px;color:var(--gray-400)">${g.obs}</span>`:''}</td><td style="font-size:12px;color:var(--gray-600)">${g.proveedor||'—'}${g.nroFactura?`<br><span style="font-size:11px;color:var(--gray-400)">Nro: ${g.nroFactura}</span>`:''}</td><td style="font-size:12px;color:var(--gray-600)">${g.categoria}</td><td style="font-size:12px">${g.factura==='Sí, a nombre de Granger S.A.'?'✅':g.factura==='Ticket/comprobante'?'🧾':'⚠️'} ${g.factura}${g.comprobante&&(g.comprobante.url||g.comprobante.data)?`<br><a href="${g.comprobante.url||g.comprobante.data}" target="_blank" style="font-size:11px;text-decoration:underline">📎 ver foto</a>`:''}</td><td class="td-amount">${g.moneda==='ARS'?'$':'USD '}${fmt(g.importe)}</td></tr>`).join('')}
       </tbody></table>`;
     }else{
       detailContent=`<div class="detail-grid">
@@ -440,11 +460,12 @@ window.renderAdmin=function(){
         <div class="detail-item"><div class="d-label">Motivo</div><div class="d-value">${r.motivo}</div></div>
         <div class="detail-item"><div class="d-label">Adjunto</div><div class="d-value">${adjuntoHTML(r)}</div></div>
         ${r.km>0?`<div class="detail-item"><div class="d-label">Kilometraje</div><div class="d-value">${r.km} km × $${r.valorKm} = <strong>$${fmt(r.kmImporte)}</strong></div></div>`:''}
+        ${r.recibioEfectivo?`<div class="detail-item" style="grid-column:1/-1;background:#FFF8E8"><div class="d-label">Efectivo recibido</div><div class="d-value">Recibió $${fmt(r.importeEfectivo||0)} — ${saldoEfectivoHTML(r)}</div></div>`:''}
         ${r.obs?`<div class="detail-item" style="grid-column:1/-1"><div class="d-label">Observaciones</div><div class="d-value">${r.obs}</div></div>`:''}
       </div>
-      <table class="mini-gastos"><thead><tr><th>Fecha</th><th>Concepto</th><th>Facturado a</th><th>Método</th><th>Comentarios</th><th style="text-align:right">Importe</th></tr></thead><tbody>
-        ${(r.gastos||[]).map(g=>`<tr><td style="font-size:12px;color:var(--gray-600)">${formatDate(g.fecha)}</td><td><strong>${g.concepto}</strong></td><td style="font-size:12px;color:var(--gray-600)">${g.facturado}</td><td style="font-size:12px">${g.metodo==='REINTEGRO'?'🔄 Reintegro':'💰 Adelanto'}</td><td style="font-size:12px;color:var(--gray-600)">${g.comentarios||'—'}</td><td class="td-amount">$${fmt(g.importe)}</td></tr>`).join('')}
-        ${r.km>0?`<tr style="background:var(--gray-50)"><td colspan="5" style="font-size:12px;color:var(--gray-600);font-style:italic">Kilometraje (${r.km} km)</td><td class="td-amount">$${fmt(r.kmImporte)}</td></tr>`:''}
+      <table class="mini-gastos"><thead><tr><th>Fecha</th><th>Concepto</th><th>Proveedor / Factura</th><th>Facturado a</th><th>Método</th><th>Comentarios</th><th style="text-align:right">Importe</th></tr></thead><tbody>
+        ${(r.gastos||[]).map(g=>`<tr><td style="font-size:12px;color:var(--gray-600)">${formatDate(g.fecha)}</td><td><strong>${g.concepto}</strong>${g.comprobante&&(g.comprobante.url||g.comprobante.data)?`<br><a href="${g.comprobante.url||g.comprobante.data}" target="_blank" style="font-size:11px;text-decoration:underline">📎 ver foto</a>`:''}</td><td style="font-size:12px;color:var(--gray-600)">${g.proveedor||'—'}${g.nroFactura?`<br><span style="font-size:11px;color:var(--gray-400)">Nro: ${g.nroFactura}</span>`:''}</td><td style="font-size:12px;color:var(--gray-600)">${g.facturado}</td><td style="font-size:12px">${g.metodo==='REINTEGRO'?'🔄 Reintegro':'💰 Adelanto'}</td><td style="font-size:12px;color:var(--gray-600)">${g.comentarios||'—'}</td><td class="td-amount">$${fmt(g.importe)}</td></tr>`).join('')}
+        ${r.km>0?`<tr style="background:var(--gray-50)"><td colspan="6" style="font-size:12px;color:var(--gray-600);font-style:italic">Kilometraje (${r.km} km)</td><td class="td-amount">$${fmt(r.kmImporte)}</td></tr>`:''}
       </tbody></table>`;
     }
     return `<div class="rendicion-card">
@@ -634,6 +655,11 @@ window.generarPDFRendicion=function(r){
   }
   if(r.tipo==='viaticos'){
     docu.text(`¿Recibió efectivo?: ${r.recibioEfectivo?'Sí — $'+fmt(r.importeEfectivo||0):'No'}`,margin,y);y+=16;
+    if(r.recibioEfectivo){
+      const saldo=(r.importeEfectivo||0)-(r.totalARS||0);
+      const saldoTxt=saldo>0.005?`Debe devolver a Administración: $${fmt(saldo)}`:saldo<-0.005?`A reintegrarle al titular: $${fmt(Math.abs(saldo))}`:'Sin saldo pendiente';
+      docu.setFont('helvetica','bold');docu.text(saldoTxt,margin,y);docu.setFont('helvetica','normal');y+=16;
+    }
   }
   if(r.comentarioAdmin){
     docu.text('Consulta: '+r.comentarioAdmin,margin,y,{maxWidth:515});y+=16;
@@ -644,12 +670,12 @@ window.generarPDFRendicion=function(r){
   // Tabla de gastos
   let head,bodyRows;
   if(r.tipo==='tarjeta'){
-    head=[['Fecha','Descripción','Categoría','Comprobante','Importe']];
-    bodyRows=(r.gastos||[]).map(g=>[formatDate(g.fecha),g.desc||'',g.categoria||'',g.factura||'',(g.moneda==='ARS'?'$':'USD ')+fmt(g.importe||0)]);
+    head=[['Fecha','Descripción','Proveedor','Nro. Factura','Categoría','Comprobante','Importe']];
+    bodyRows=(r.gastos||[]).map(g=>[formatDate(g.fecha),g.desc||'',g.proveedor||'',g.nroFactura||'',g.categoria||'',g.factura||'',(g.moneda==='ARS'?'$':'USD ')+fmt(g.importe||0)]);
   }else{
-    head=[['Fecha','Concepto','Facturado a','Método','Comentarios','Importe']];
-    bodyRows=(r.gastos||[]).map(g=>[formatDate(g.fecha),g.concepto||'',g.facturado||'',g.metodo==='REINTEGRO'?'Reintegro':'Adelanto',g.comentarios||'—','$'+fmt(g.importe||0)]);
-    if(r.km>0)bodyRows.push(['','Kilometraje ('+r.km+' km × $'+r.valorKm+')','','','','$'+fmt(r.kmImporte||0)]);
+    head=[['Fecha','Concepto','Proveedor','Nro. Factura','Facturado a','Método','Comentarios','Importe']];
+    bodyRows=(r.gastos||[]).map(g=>[formatDate(g.fecha),g.concepto||'',g.proveedor||'',g.nroFactura||'',g.facturado||'',g.metodo==='REINTEGRO'?'Reintegro':'Adelanto',g.comentarios||'—','$'+fmt(g.importe||0)]);
+    if(r.km>0)bodyRows.push(['','Kilometraje ('+r.km+' km × $'+r.valorKm+')','','','','','','$'+fmt(r.kmImporte||0)]);
   }
   docu.autoTable({startY:y,margin:{left:margin,right:margin},head,body:bodyRows,styles:{fontSize:9,cellPadding:5},headStyles:{fillColor:[26,26,26]}});
   let finalY=(docu.lastAutoTable&&docu.lastAutoTable.finalY)?docu.lastAutoTable.finalY+24:y+40;
@@ -684,19 +710,19 @@ window.exportarDetalleCSV=function(){
   if(estado)datos=datos.filter(r=>r.estado===estado);
   if(titular)datos=datos.filter(r=>r.titular===titular);
 
-  const rows=[['Fecha envío','Titular','Tipo','Área','Fechas de viaje / Período','Motivo','Estado','Fecha gasto','Concepto/Descripción','Facturado a','Categoría','Comprobante','Método','Comentarios','Importe','Moneda','Recibió efectivo','Importe efectivo','Link factura']];
+  const rows=[['Fecha envío','Titular','Tipo','Área','Fechas de viaje / Período','Motivo','Estado','Fecha gasto','Concepto/Descripción','Facturado a','Categoría','Comprobante','Método','Comentarios','Importe','Moneda','Recibió efectivo','Importe efectivo','Link factura','Proveedor','Nro. Factura']];
   datos.forEach(r=>{
     const fechaEnvio=new Date(r.fechaEnvio).toLocaleDateString('es-AR');
     const base=[fechaEnvio,r.titular,r.tipo==='tarjeta'?'Tarjeta Corporativa':'Viáticos',r.area||'',r.tipo==='tarjeta'?(r.periodo||''):(r.fechasViaje||''),r.tipo==='tarjeta'?'':(r.motivo||''),r.estado];
     (r.gastos||[]).forEach(g=>{
       if(r.tipo==='tarjeta'){
-        rows.push([...base,formatDate(g.fecha),g.desc||'',g.moneda==='ARS'?'ARS':'USD',g.categoria||'',g.factura||'','','',g.obs||'',(g.importe||0).toFixed(2).replace('.',','),g.moneda||'ARS','','',g.link||'']);
+        rows.push([...base,formatDate(g.fecha),g.desc||'',g.moneda==='ARS'?'ARS':'USD',g.categoria||'',g.factura||'','','',g.obs||'',(g.importe||0).toFixed(2).replace('.',','),g.moneda||'ARS','','',g.link||'',g.proveedor||'',g.nroFactura||'']);
       }else{
-        rows.push([...base,formatDate(g.fecha),g.concepto||'',g.facturado||'','',g.factura||'',g.metodo==='REINTEGRO'?'Reintegro':'Adelanto empresa',g.comentarios||'',(g.importe||0).toFixed(2).replace('.',','),'ARS',r.recibioEfectivo?'Sí':'No',r.recibioEfectivo?(r.importeEfectivo||0).toFixed(2).replace('.',','):'',g.link||'']);
+        rows.push([...base,formatDate(g.fecha),g.concepto||'',g.facturado||'','',g.factura||'',g.metodo==='REINTEGRO'?'Reintegro':'Adelanto empresa',g.comentarios||'',(g.importe||0).toFixed(2).replace('.',','),'ARS',r.recibioEfectivo?'Sí':'No',r.recibioEfectivo?(r.importeEfectivo||0).toFixed(2).replace('.',','):'',g.link||'',g.proveedor||'',g.nroFactura||'']);
       }
     });
     if(r.tipo==='viaticos'&&r.km>0){
-      rows.push([...base,'','Kilometraje ('+r.km+' km × $'+r.valorKm+')','','','','','',(r.kmImporte||0).toFixed(2).replace('.',','),'ARS',r.recibioEfectivo?'Sí':'No',r.recibioEfectivo?(r.importeEfectivo||0).toFixed(2).replace('.',','):'','']);
+      rows.push([...base,'','Kilometraje ('+r.km+' km × $'+r.valorKm+')','','','','','',(r.kmImporte||0).toFixed(2).replace('.',','),'ARS',r.recibioEfectivo?'Sí':'No',r.recibioEfectivo?(r.importeEfectivo||0).toFixed(2).replace('.',','):'','','','']);
     }
   });
 

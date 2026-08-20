@@ -133,6 +133,7 @@
   body { display:flex; flex-direction:column; min-height:100vh; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
 <header class="app-header">
@@ -212,8 +213,16 @@
             <div class="form-group"><label>Comprobante</label>
               <select id="g_factura"><option value="Sí, a nombre de Granger S.A.">Sí — Granger S.A.</option><option value="Ticket/comprobante">Ticket / Comprobante</option><option value="No">Sin comprobante</option></select>
             </div>
+            <div class="form-group"><label>Proveedor</label><input type="text" id="g_proveedor" placeholder="Se completa solo al leer el comprobante"></div>
+            <div class="form-group"><label>Nro. de factura</label><input type="text" id="g_nroFactura" placeholder="Se completa solo al leer el comprobante"></div>
           </div>
           <div class="form-group" style="margin-top:10px"><label>Observación <span style="color:var(--red)">*</span></label><input type="text" id="g_obs" placeholder="Ej: viaje a Rosario 23/5"></div>
+          <div style="margin-top:10px">
+            <label style="font-size:12px;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:0.4px">Foto del comprobante de este gasto (opcional)</label>
+            <p style="font-size:11px;color:var(--gray-400);margin:2px 0 6px">Subila y completamos fecha, importe, proveedor y nro. de factura automáticamente.</p>
+            <input type="file" id="g_gastoComprobanteFile" accept=".pdf,.jpg,.jpeg,.png" onchange="window.leerYAdjuntarComprobanteGasto(this,'g')">
+            <div id="g_ocrStatus" style="font-size:12px;color:var(--gray-600);margin-top:6px"></div>
+          </div>
           <div style="margin-top:12px"><button class="btn btn-accent" onclick="agregarGasto()">+ Agregar gasto</button></div>
         </div>
       </div>
@@ -299,8 +308,16 @@
               <select id="vg_metodo"><option value="REINTEGRO">Reintegro (gasto propio)</option><option value="ADELANTO">Adelanto empresa</option></select>
             </div>
             <div class="form-group"><label>Link de factura (opcional)</label><input type="text" id="vg_link" placeholder="https://..."></div>
+            <div class="form-group"><label>Proveedor</label><input type="text" id="vg_proveedor" placeholder="Se completa solo al leer el comprobante"></div>
+            <div class="form-group"><label>Nro. de factura</label><input type="text" id="vg_nroFactura" placeholder="Se completa solo al leer el comprobante"></div>
           </div>
           <div class="form-group" style="margin-top:10px"><label>Comentarios / Detalle <span style="color:var(--red)">*</span></label><input type="text" id="vg_comentarios" placeholder="Ej: pagué por otro, adjunto transferencia"></div>
+          <div style="margin-top:10px">
+            <label style="font-size:12px;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:0.4px">Foto del comprobante de este gasto (opcional)</label>
+            <p style="font-size:11px;color:var(--gray-400);margin:2px 0 6px">Subila y completamos fecha, importe, proveedor y nro. de factura automáticamente.</p>
+            <input type="file" id="vg_gastoComprobanteFile" accept=".pdf,.jpg,.jpeg,.png" onchange="window.leerYAdjuntarComprobanteGasto(this,'vg')">
+            <div id="vg_ocrStatus" style="font-size:12px;color:var(--gray-600);margin-top:6px"></div>
+          </div>
           <div style="margin-top:12px;display:flex;align-items:center;gap:8px">
             <input type="checkbox" id="vg_tienePropina" onchange="window.toggleVGPropina()">
             <label style="text-transform:none;font-size:13px;font-weight:600;color:var(--gray-800)">¿Este gasto incluyó propina?</label>
@@ -359,6 +376,70 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebas
 import { getFirestore, collection, addDoc, doc, updateDoc, orderBy, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
 
 emailjs.init("jf6Oi8cC6ByyRQ8SN");
+
+// ---- Supabase (almacenamiento de fotos de comprobantes) ----
+const SUPABASE_URL = "https://yoqfbnmujmwvhrtbmmav.supabase.co";
+const SUPABASE_KEY = "sb_publishable_bABSUVYehi4nrWY-c8-MXA_1CWVQ-_P";
+const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_BUCKET = "comprobantes";
+
+// URL de la función de lectura de comprobantes (Netlify). Se actualiza una vez publicada.
+const OCR_FUNCTION_URL = "https://granger-rendiciones-ocr.netlify.app/.netlify/functions/extraer-comprobante";
+
+function leerArchivoComoDataURL(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result||''));
+    reader.onerror=()=>reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function subirComprobanteASupabase(file){
+  const path=`${Date.now()}_${Math.random().toString(36).slice(2)}_${file.name}`.replace(/[^\w.\-]+/g,'_');
+  const {error}=await supa.storage.from(SUPABASE_BUCKET).upload(path,file,{cacheControl:'3600',upsert:false});
+  if(error)throw error;
+  const {data}=supa.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
+  return data.publicUrl;
+}
+
+async function leerComprobanteConIA(dataUrl){
+  const resp=await fetch(OCR_FUNCTION_URL,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({dataUrl})});
+  if(!resp.ok)throw new Error('No se pudo leer el comprobante');
+  return await resp.json();
+}
+
+let comprobantePendienteGasto=null, comprobantePendienteVGasto=null;
+window.leerYAdjuntarComprobanteGasto=async function(input,prefijo){
+  const file=input.files[0];
+  if(!file)return;
+  if(file.size>5*1024*1024){showToast('El archivo supera los 5MB','error');input.value='';return;}
+  const statusEl=document.getElementById(prefijo+'_ocrStatus');
+  statusEl.textContent='⏳ Subiendo y leyendo comprobante con IA...';
+  try{
+    const [dataUrl,url]=await Promise.all([leerArchivoComoDataURL(file),subirComprobanteASupabase(file)]);
+    const info={name:file.name,size:file.size,type:file.type,url};
+    if(prefijo==='g')comprobantePendienteGasto=info;else comprobantePendienteVGasto=info;
+    statusEl.innerHTML=`✅ ${file.name} adjuntado — leyendo datos...`;
+    try{
+      const extraido=await leerComprobanteConIA(dataUrl);
+      if(extraido.fecha)document.getElementById(prefijo+'_fecha').value=extraido.fecha;
+      if(extraido.importe!=null){
+        const imp=document.getElementById(prefijo+'_importe');
+        imp.value=String(extraido.importe).replace('.',',');
+        window.formatARInput(imp);
+      }
+      if(extraido.proveedor)document.getElementById(prefijo+'_proveedor').value=extraido.proveedor;
+      if(extraido.numeroFactura)document.getElementById(prefijo+'_nroFactura').value=extraido.numeroFactura;
+      statusEl.innerHTML=`✅ ${file.name} — datos completados, revisá antes de guardar.`;
+    }catch(e){
+      statusEl.innerHTML=`✅ ${file.name} adjuntado (no se pudieron leer los datos automáticamente, completá a mano).`;
+    }
+  }catch(e){
+    statusEl.textContent='❌ Error al subir el comprobante: '+(e.message||e);
+    if(prefijo==='g')comprobantePendienteGasto=null;else comprobantePendienteVGasto=null;
+  }
+};
 
 const firebaseConfig = {
   apiKey: "AIzaSyCFHIU_4O-NiwFccMqZafLbRWndXmMBjX8",
@@ -470,14 +551,19 @@ window.agregarGasto=function(){
   const fecha=document.getElementById('g_fecha').value,desc=document.getElementById('g_desc').value.trim(),
     importe=parseARNumber(document.getElementById('g_importe').value),moneda=document.getElementById('g_moneda').value,
     categoria=document.getElementById('g_categoria').value,factura=document.getElementById('g_factura').value,
-    obs=document.getElementById('g_obs').value.trim();
+    obs=document.getElementById('g_obs').value.trim(),
+    proveedor=document.getElementById('g_proveedor').value.trim(),
+    nroFactura=document.getElementById('g_nroFactura').value.trim();
   if(!fecha){showToast('Ingresá la fecha','error');return;}
   if(!desc){showToast('Ingresá la descripción','error');return;}
   if(!importe||importe<=0){showToast('Ingresá un importe válido','error');return;}
   if(!obs){showToast('Completá la observación del gasto','error');return;}
-  gastos.push({id:Date.now(),fecha,desc,importe,moneda,categoria,factura,obs});
+  gastos.push({id:Date.now(),fecha,desc,importe,moneda,categoria,factura,obs,proveedor,nroFactura,comprobante:comprobantePendienteGasto});
+  comprobantePendienteGasto=null;
   renderGastos();
-  ['g_fecha','g_desc','g_importe','g_obs'].forEach(id=>document.getElementById(id).value='');
+  ['g_fecha','g_desc','g_importe','g_obs','g_proveedor','g_nroFactura'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('g_gastoComprobanteFile').value='';
+  document.getElementById('g_ocrStatus').textContent='';
   showToast('Gasto agregado ✓','success');
 };
 window.eliminarGasto=function(id){gastos=gastos.filter(g=>g.id!==id);renderGastos();};
@@ -491,20 +577,29 @@ function renderGastos(){
 function renderFilePreviews(){
   const c=document.getElementById('filePreviewList');
   c.innerHTML=attachedFiles.map(f=>`<div class="file-preview" style="display:flex">
-    <span style="font-size:20px">📄</span><span class="file-name">${f.name}</span><span class="file-size">${formatFileSize(f.size)}</span>
+    <span style="font-size:20px">${f.subiendo?'⏳':'📄'}</span><span class="file-name">${f.name}${f.subiendo?' — subiendo...':''}</span><span class="file-size">${formatFileSize(f.size)}</span>
     <button class="remove-file" onclick="removeFile('${f.id}')">✕</button>
   </div>`).join('');
 }
-window.handleFileInput=function(input){
+window.handleFileInput=async function(input){
   const files=Array.from(input.files||[]);
   if(!files.length)return;
-  files.forEach(file=>{
-    if(file.size>5*1024*1024){showToast(`"${file.name}" supera los 5MB`,'error');return;}
-    const reader=new FileReader();
-    reader.onload=e=>{attachedFiles.push({id:Date.now()+Math.random(),name:String(file.name||'archivo'),size:Number(file.size||0),type:String(file.type||'application/octet-stream'),data:String(e.target.result||'')});renderFilePreviews();};
-    reader.onerror=()=>{showToast('Error al leer el archivo','error');};
-    reader.readAsDataURL(file);
-  });
+  for(const file of files){
+    if(file.size>5*1024*1024){showToast(`"${file.name}" supera los 5MB`,'error');continue;}
+    const tempId='pend_'+Date.now()+Math.random();
+    attachedFiles.push({id:tempId,name:file.name,size:file.size,type:file.type,url:null,subiendo:true});
+    renderFilePreviews();
+    try{
+      const url=await subirComprobanteASupabase(file);
+      const item=attachedFiles.find(f=>f.id===tempId);
+      if(item){item.url=url;item.subiendo=false;}
+      renderFilePreviews();
+    }catch(e){
+      attachedFiles=attachedFiles.filter(f=>f.id!==tempId);
+      showToast(`Error al subir "${file.name}"`,'error');
+      renderFilePreviews();
+    }
+  }
   input.value='';
 };
 window.handleDrop=function(e){e.preventDefault();document.getElementById('uploadZone').classList.remove('dragover');if(e.dataTransfer.files.length){const dt=new DataTransfer();Array.from(e.dataTransfer.files).forEach(f=>dt.items.add(f));document.getElementById('fileInput').files=dt.files;window.handleFileInput(document.getElementById('fileInput'));}};
@@ -513,6 +608,7 @@ window.enviarRendicion=async function(){
   const titular=document.getElementById('titularSelect').value,periodo=document.getElementById('periodoSelect').value,obs=document.getElementById('obsGenerales').value.trim();
   if(!titular){showToast('Seleccioná tu nombre','error');return;}
   if(!gastos.length){showToast('Agregá al menos un gasto','error');return;}
+  if(attachedFiles.some(f=>f.subiendo)){showToast('Esperá a que terminen de subir los archivos','error');return;}
   const totalARS=gastos.filter(g=>g.moneda==='ARS').reduce((s,g)=>s+g.importe,0);
   const totalUSD=gastos.filter(g=>g.moneda==='USD').reduce((s,g)=>s+g.importe,0);
   document.getElementById('btnEnviar').disabled=true;document.getElementById('sendingMsg').style.display='';
@@ -562,15 +658,20 @@ window.agregarVGasto=function(){
   const tienePropina=document.getElementById('vg_tienePropina').checked;
   const importePropina=tienePropina?parseARNumber(document.getElementById('vg_importePropina').value):0;
   if(tienePropina&&importePropina<=0){showToast('Ingresá el importe de la propina','error');return;}
-  vGastos.push({id:Date.now(),fecha,concepto,importe,facturado,metodo,link,comentarios});
+  const proveedor=document.getElementById('vg_proveedor').value.trim(),
+    nroFactura=document.getElementById('vg_nroFactura').value.trim();
+  vGastos.push({id:Date.now(),fecha,concepto,importe,facturado,metodo,link,comentarios,proveedor,nroFactura,comprobante:comprobantePendienteVGasto});
+  comprobantePendienteVGasto=null;
   // Según el procedimiento de viáticos, la propina se carga como un gasto independiente con concepto "Propina".
   if(tienePropina&&importePropina>0){
-    vGastos.push({id:Date.now()+1,fecha,concepto:'Propina',importe:importePropina,facturado,metodo,link:'',comentarios:`Propina sobre: ${concepto}`});
+    vGastos.push({id:Date.now()+1,fecha,concepto:'Propina',importe:importePropina,facturado,metodo,link:'',comentarios:`Propina sobre: ${concepto}`,proveedor:'',nroFactura:'',comprobante:null});
   }
   renderVGastos();
-  ['vg_fecha','vg_concepto','vg_importe','vg_link','vg_comentarios','vg_importePropina'].forEach(id=>document.getElementById(id).value='');
+  ['vg_fecha','vg_concepto','vg_importe','vg_link','vg_comentarios','vg_importePropina','vg_proveedor','vg_nroFactura'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('vg_tienePropina').checked=false;
   document.getElementById('vgPropinaWrap').style.display='none';
+  document.getElementById('vg_gastoComprobanteFile').value='';
+  document.getElementById('vg_ocrStatus').textContent='';
   showToast(tienePropina?'Gasto y propina agregados ✓':'Gasto agregado ✓','success');
 };
 window.eliminarVGasto=function(id){vGastos=vGastos.filter(g=>g.id!==id);renderVGastos();};
@@ -586,20 +687,29 @@ window.calcKm=function(){const km=parseFloat(document.getElementById('v_km').val
 function renderVFilePreviews(){
   const c=document.getElementById('vFilePreviewList');
   c.innerHTML=vAttachedFiles.map(f=>`<div class="file-preview" style="display:flex">
-    <span style="font-size:20px">📄</span><span class="file-name">${f.name}</span><span class="file-size">${formatFileSize(f.size)}</span>
+    <span style="font-size:20px">${f.subiendo?'⏳':'📄'}</span><span class="file-name">${f.name}${f.subiendo?' — subiendo...':''}</span><span class="file-size">${formatFileSize(f.size)}</span>
     <button class="remove-file" onclick="removeVFile('${f.id}')">✕</button>
   </div>`).join('');
 }
-window.handleVFileInput=function(input){
+window.handleVFileInput=async function(input){
   const files=Array.from(input.files||[]);
   if(!files.length)return;
-  files.forEach(file=>{
-    if(file.size>5*1024*1024){showToast(`"${file.name}" supera los 5MB`,'error');return;}
-    const reader=new FileReader();
-    reader.onload=e=>{vAttachedFiles.push({id:Date.now()+Math.random(),name:String(file.name||'archivo'),size:Number(file.size||0),type:String(file.type||'application/octet-stream'),data:String(e.target.result||'')});renderVFilePreviews();};
-    reader.onerror=()=>{showToast('Error al leer el archivo','error');};
-    reader.readAsDataURL(file);
-  });
+  for(const file of files){
+    if(file.size>5*1024*1024){showToast(`"${file.name}" supera los 5MB`,'error');continue;}
+    const tempId='pend_'+Date.now()+Math.random();
+    vAttachedFiles.push({id:tempId,name:file.name,size:file.size,type:file.type,url:null,subiendo:true});
+    renderVFilePreviews();
+    try{
+      const url=await subirComprobanteASupabase(file);
+      const item=vAttachedFiles.find(f=>f.id===tempId);
+      if(item){item.url=url;item.subiendo=false;}
+      renderVFilePreviews();
+    }catch(e){
+      vAttachedFiles=vAttachedFiles.filter(f=>f.id!==tempId);
+      showToast(`Error al subir "${file.name}"`,'error');
+      renderVFilePreviews();
+    }
+  }
   input.value='';
 };
 window.handleVDrop=function(e){e.preventDefault();document.getElementById('vUploadZone').classList.remove('dragover');if(e.dataTransfer.files.length){const dt=new DataTransfer();Array.from(e.dataTransfer.files).forEach(f=>dt.items.add(f));document.getElementById('vFileInput').files=dt.files;window.handleVFileInput(document.getElementById('vFileInput'));}};
@@ -609,7 +719,7 @@ window.enviarViatico=async function(){
     fechas=document.getElementById('v_fechas').value.trim(),motivo=document.getElementById('v_motivo').value.trim(),obs=document.getElementById('vObs').value.trim();
   const recibioEfectivo=document.getElementById('v_recibioEfectivo').value,
     importeEfectivo=recibioEfectivo==='Si'?(parseARNumber(document.getElementById('v_importeEfectivo').value)||0):0;
-  if(!nombre){showToast('Ingresá tu nombre','error');return;}if(!area){showToast('Seleccioná el área','error');return;}if(!fechas){showToast('Ingresá las fechas','error');return;}if(!motivo){showToast('Ingresá el motivo del viaje','error');return;}if(!vGastos.length){showToast('Agregá al menos un gasto','error');return;}
+  if(!nombre){showToast('Ingresá tu nombre','error');return;}if(!area){showToast('Seleccioná el área','error');return;}if(!fechas){showToast('Ingresá las fechas','error');return;}if(!motivo){showToast('Ingresá el motivo del viaje','error');return;}if(!vGastos.length){showToast('Agregá al menos un gasto','error');return;}if(vAttachedFiles.some(f=>f.subiendo)){showToast('Esperá a que terminen de subir los archivos','error');return;}
   const km=parseFloat(document.getElementById('v_km').value)||0,valorKm=parseARNumber(document.getElementById('v_valorKm').value)||501.05,kmImporte=km*valorKm;
   const totalARS=vGastos.reduce((s,g)=>s+g.importe,0)+kmImporte;
   document.getElementById('vBtnEnviar').disabled=true;document.getElementById('vSendingMsg').style.display='';
