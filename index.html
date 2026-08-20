@@ -202,6 +202,12 @@
         </div>
         <div style="border-top:1.5px solid var(--gray-100);margin-top:14px;padding-top:16px">
           <div style="font-size:13px;font-weight:700;color:var(--gray-600);margin-bottom:10px">Agregar gasto</div>
+          <div style="margin-bottom:14px">
+            <label style="font-size:12px;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:0.4px">Foto del comprobante de este gasto (opcional)</label>
+            <p style="font-size:11px;color:var(--gray-400);margin:2px 0 6px">Subila primero y completamos fecha, importe, proveedor y nro. de factura automáticamente.</p>
+            <input type="file" id="g_gastoComprobanteFile" accept=".pdf,.jpg,.jpeg,.png" onchange="window.leerYAdjuntarComprobanteGasto(this,'g')">
+            <div id="g_ocrStatus" style="font-size:12px;color:var(--gray-600);margin-top:6px"></div>
+          </div>
           <div class="form-grid cols-3">
             <div class="form-group"><label>Fecha <span style="color:var(--red)">*</span></label><input type="date" id="g_fecha"></div>
             <div class="form-group"><label>Descripción <span style="color:var(--red)">*</span></label><input type="text" id="g_desc" placeholder="Ej: YPF Rafaela"></div>
@@ -217,26 +223,8 @@
             <div class="form-group"><label>Nro. de factura</label><input type="text" id="g_nroFactura" placeholder="Se completa solo al leer el comprobante"></div>
           </div>
           <div class="form-group" style="margin-top:10px"><label>Observación <span style="color:var(--red)">*</span></label><input type="text" id="g_obs" placeholder="Ej: viaje a Rosario 23/5"></div>
-          <div style="margin-top:10px">
-            <label style="font-size:12px;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:0.4px">Foto del comprobante de este gasto (opcional)</label>
-            <p style="font-size:11px;color:var(--gray-400);margin:2px 0 6px">Subila y completamos fecha, importe, proveedor y nro. de factura automáticamente.</p>
-            <input type="file" id="g_gastoComprobanteFile" accept=".pdf,.jpg,.jpeg,.png" onchange="window.leerYAdjuntarComprobanteGasto(this,'g')">
-            <div id="g_ocrStatus" style="font-size:12px;color:var(--gray-600);margin-top:6px"></div>
-          </div>
           <div style="margin-top:12px"><button class="btn btn-accent" onclick="agregarGasto()">+ Agregar gasto</button></div>
         </div>
-      </div>
-      <div class="card">
-        <div class="card-title"><div class="icon">📎</div> Adjuntar comprobantes (opcional)</div>
-        <p style="font-size:13px;color:var(--gray-600);margin-bottom:6px">Adjuntá los comprobantes que tengas. Máx. 5MB por archivo.</p>
-        <p style="font-size:12px;color:var(--gray-600);margin-bottom:14px;font-style:italic">Subí una foto por cada comprobante — no juntes varios tickets o facturas en una sola foto.</p>
-        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
-          <div class="upload-icon">📎</div>
-          <p><strong>Hacé clic</strong> o arrastrá los archivos aquí</p>
-          <p style="font-size:11px;margin-top:4px;color:var(--gray-400)">Opcional — PDF, JPG o PNG — máx. 5MB por archivo — podés elegir varios</p>
-        </div>
-        <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" multiple style="display:none" onchange="handleFileInput(this)">
-        <div id="filePreviewList"></div>
       </div>
       <div class="card">
         <div class="card-title"><div class="icon">💬</div> Observaciones generales</div>
@@ -337,17 +325,6 @@
           <span style="font-size:13px;color:var(--gray-600)">Importe por kilometraje: </span>
           <span id="kmImporte" style="font-size:15px;font-weight:800">$0</span>
         </div>
-      </div>
-      <div class="card">
-        <div class="card-title"><div class="icon">📎</div> Adjuntar comprobantes (opcional)</div>
-        <p style="font-size:13px;color:var(--gray-600);margin-bottom:6px">Adjuntá tickets, facturas u otros comprobantes. Máx. 5MB por archivo.</p>
-        <p style="font-size:12px;color:var(--gray-600);margin-bottom:14px;font-style:italic">Subí una foto por cada comprobante — no juntes varios tickets o facturas en una sola foto.</p>
-        <div class="upload-zone" id="vUploadZone" onclick="document.getElementById('vFileInput').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleVDrop(event)">
-          <div class="upload-icon">📎</div><p><strong>Hacé clic</strong> o arrastrá los archivos aquí</p>
-          <p style="font-size:11px;margin-top:4px;color:var(--gray-400)">Opcional — PDF, JPG o PNG — máx. 5MB por archivo — podés elegir varios</p>
-        </div>
-        <input type="file" id="vFileInput" accept=".pdf,.jpg,.jpeg,.png" multiple style="display:none" onchange="handleVFileInput(this)">
-        <div id="vFilePreviewList"></div>
       </div>
       <div class="card">
         <div class="card-title"><div class="icon">💬</div> Observaciones</div>
@@ -581,6 +558,7 @@ function renderGastos(){
 }
 function renderFilePreviews(){
   const c=document.getElementById('filePreviewList');
+  if(!c)return;
   c.innerHTML=attachedFiles.map(f=>`<div class="file-preview" style="display:flex">
     <span style="font-size:20px">${f.subiendo?'⏳':'📄'}</span><span class="file-name">${f.name}${f.subiendo?' — subiendo...':''}</span><span class="file-size">${formatFileSize(f.size)}</span>
     <button class="remove-file" onclick="removeFile('${f.id}')">✕</button>
@@ -691,6 +669,7 @@ function renderVGastos(){
 window.calcKm=function(){const km=parseFloat(document.getElementById('v_km').value)||0;const val=parseARNumber(document.getElementById('v_valorKm').value)||0;document.getElementById('kmResult').style.display=km>0?'':'none';document.getElementById('kmImporte').textContent='$'+fmt(km*val);if(window.actualizarSaldoEfectivo)window.actualizarSaldoEfectivo();};
 function renderVFilePreviews(){
   const c=document.getElementById('vFilePreviewList');
+  if(!c)return;
   c.innerHTML=vAttachedFiles.map(f=>`<div class="file-preview" style="display:flex">
     <span style="font-size:20px">${f.subiendo?'⏳':'📄'}</span><span class="file-name">${f.name}${f.subiendo?' — subiendo...':''}</span><span class="file-size">${formatFileSize(f.size)}</span>
     <button class="remove-file" onclick="removeVFile('${f.id}')">✕</button>
