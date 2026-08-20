@@ -405,8 +405,13 @@ async function subirComprobanteASupabase(file){
 
 async function leerComprobanteConIA(dataUrl){
   const resp=await fetch(OCR_FUNCTION_URL,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({dataUrl})});
-  if(!resp.ok)throw new Error('No se pudo leer el comprobante');
-  return await resp.json();
+  const texto=await resp.text();
+  let json=null;try{json=JSON.parse(texto);}catch(e){}
+  if(!resp.ok){
+    const detalle=json&&json.error?json.error+(json.detalle?': '+JSON.stringify(json.detalle):''):texto.slice(0,300);
+    throw new Error(detalle||('HTTP '+resp.status));
+  }
+  return json||{};
 }
 
 let comprobantePendienteGasto=null, comprobantePendienteVGasto=null;
@@ -433,7 +438,7 @@ window.leerYAdjuntarComprobanteGasto=async function(input,prefijo){
       if(extraido.numeroFactura)document.getElementById(prefijo+'_nroFactura').value=extraido.numeroFactura;
       statusEl.innerHTML=`✅ ${file.name} — datos completados, revisá antes de guardar.`;
     }catch(e){
-      statusEl.innerHTML=`✅ ${file.name} adjuntado (no se pudieron leer los datos automáticamente, completá a mano).`;
+      statusEl.innerHTML=`✅ ${file.name} adjuntado (no se pudieron leer los datos automáticamente, completá a mano).<br><span style="color:var(--red);font-size:11px">Detalle: ${String(e.message||e).slice(0,300)}</span>`;
     }
   }catch(e){
     statusEl.textContent='❌ Error al subir el comprobante: '+(e.message||e);
