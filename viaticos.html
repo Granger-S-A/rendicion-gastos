@@ -446,7 +446,7 @@ function badgeHTML(estado){const map={'pendiente':['badge-pending','● Pendient
 function showToast(msg,type){const c=document.getElementById('toastContainer');const t=document.createElement('div');t.className='toast '+(type||'');t.textContent=msg;c.appendChild(t);setTimeout(()=>t.remove(),3200);}
 
 async function enviarEmail(titular,tipo,periodo,total,detalle){
-  try{await emailjs.send("service_0mghs9h","oowdhr7",{titular,tipo,periodo,total,detalle,name:"Sistema Rendiciones Granger",time:new Date().toLocaleString('es-AR'),message:`Nueva rendición de ${titular} (${tipo}) por ${total}`,email:"yvaroli@grangernutricion.com"},"jf6Oi8cC6ByyRQ8SN");}catch(e){console.error('Email:',e);}
+  try{await emailjs.send("service_0mghs9h","template_wkz1xmm",{titular,tipo,periodo,total,detalle,name:"Sistema Rendiciones Granger",time:new Date().toLocaleString('es-AR'),message:`Nueva rendición de ${titular} (${tipo}) por ${total}`,email:"yvaroli@grangernutricion.com"},"jf6Oi8cC6ByyRQ8SN");}catch(e){console.error('Email:',e);}
 }
 
 // ---- Responsables de sector (VIÁTICOS) ----
@@ -493,7 +493,7 @@ function buscarResponsableDeEmpleado(titular){
   return RESPONSABLES_VIATICOS.find(r=>r.empleados.some(e=>normalizarNombre(e)===t));
 }
 async function enviarEmailResponsable(resp,titular,periodo,total,detalle){
-  try{await emailjs.send("service_0mghs9h","oowdhr7",{titular,tipo:'Viáticos',periodo,total,detalle,name:"Sistema Rendiciones Granger",time:new Date().toLocaleString('es-AR'),message:`Tenés una rendición de viáticos pendiente de validar de ${titular} (${periodo}) por ${total}. Ingresá a la planilla de administración para revisarla.`,email:resp.email},"jf6Oi8cC6ByyRQ8SN");}catch(e){console.error('Email responsable:',e);}
+  try{await emailjs.send("service_0mghs9h","template_wkz1xmm",{titular,tipo:'Viáticos',periodo,total,detalle,name:"Sistema Rendiciones Granger",time:new Date().toLocaleString('es-AR'),message:`Tenés una rendición de viáticos pendiente de validar de ${titular} (${periodo}) por ${total}. Ingresá a la planilla de administración para revisarla.`,email:resp.email},"jf6Oi8cC6ByyRQ8SN");}catch(e){console.error('Email responsable:',e);}
 }
 
 window.elegirTipo=function(tipo){
