@@ -461,6 +461,33 @@ const RESPONSABLES_VIATICOS = [
 function normalizarNombre(str){
   return String(str||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 }
+
+// ---- AUTO-IDENTIFICACION DESDE LA INTRANET ----
+// Si el link trae ?usuario=Nombre Apellido (armado desde la intranet con el usuario logueado),
+// se precarga y bloquea el nombre en los formularios para que cada uno solo vea/cargue lo suyo.
+const USUARIO_URL=(new URLSearchParams(location.search).get('usuario')||'').trim();
+window.aplicarUsuarioURL=function(){
+  if(!USUARIO_URL)return;
+  const norm=normalizarNombre(USUARIO_URL);
+  // Tarjeta \u2014 nueva rendicion
+  const tSel=document.getElementById('titularSelect');
+  if(tSel){
+    const opt=Array.from(tSel.options).find(o=>o.value&&normalizarNombre(o.value)===norm);
+    if(opt){tSel.value=opt.value;tSel.disabled=true;document.getElementById('titularNombre').value=opt.value;localStorage.setItem('ultimoTitular',opt.value);}
+  }
+  // Tarjeta \u2014 mis rendiciones
+  const tHist=document.getElementById('titularHistorialSelect');
+  if(tHist){
+    const opt=Array.from(tHist.options).find(o=>o.value&&normalizarNombre(o.value)===norm);
+    if(opt){tHist.value=opt.value;tHist.disabled=true;}
+  }
+  // Viaticos \u2014 nueva rendicion
+  const vNombre=document.getElementById('v_nombre');
+  if(vNombre){vNombre.value=USUARIO_URL;vNombre.readOnly=true;vNombre.style.background='var(--gray-100)';}
+  // Viaticos \u2014 mis rendiciones
+  const buscar=document.getElementById('buscarNombre');
+  if(buscar){buscar.value=USUARIO_URL;buscar.readOnly=true;buscar.style.background='var(--gray-100)';}
+};
 function buscarResponsableDeEmpleado(titular){
   const t=normalizarNombre(titular);
   return RESPONSABLES_VIATICOS.find(r=>r.empleados.some(e=>normalizarNombre(e)===t));
@@ -752,6 +779,7 @@ function renderVHistorial(mias){
 window.vResponder=async function(fbId){const texto=document.getElementById('vresp_'+fbId).value.trim();if(!texto){showToast('Escribí tu respuesta','error');return;}try{await updateDoc(doc(db,'rendiciones',fbId),{respuestaTitular:texto});showToast('Respuesta enviada ✓','success');}catch(e){showToast('Error','error');}};
 
 renderGastos();renderVGastos();
+window.aplicarUsuarioURL();
 </script>
 </body>
 </html>
