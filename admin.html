@@ -485,6 +485,7 @@ window.renderAdmin=function(){
         <div class="action-bar">
           ${r.estado!=='aprobado'?`<button class="btn btn-approve btn-sm" onclick="aprobar('${r.fbId}')">✓ Aprobar</button>`:'<span style="font-size:13px;font-weight:600;color:#555">✓ Aprobada</span>'}
           ${r.estado!=='aprobado'?`<button class="btn btn-sm btn-ghost" onclick="abrirConsulta('${r.fbId}')">💬 Enviar consulta</button>`:''}
+          ${r.estado==='aprobado'?(r.reintegrado?`<button class="btn btn-sm" style="background:#EAF7EE;color:#1E7B34;border:1.5px solid #1E7B34" onclick="toggleReintegrado('${r.fbId}',false)">💰 Reintegrado ✓</button>`:`<button class="btn btn-sm btn-ghost" onclick="toggleReintegrado('${r.fbId}',true)">💰 Marcar reintegrado</button>`):''}
           <button class="btn btn-sm btn-ghost" onclick="descargarPDFPorId('${r.fbId}')">📄 PDF</button>
           <span style="flex:1"></span>
           <button class="btn btn-sm" style="background:var(--red-light);color:var(--red);border:1.5px solid var(--red)" onclick="eliminar('${r.fbId}')">🗑 Eliminar</button>
@@ -503,6 +504,9 @@ window.aprobar=async function(fbId){
   }
   const aprobadoPor=responsableActivo?responsableActivo.nombre:'Administración';
   try{await updateDoc(doc(db,'rendiciones',fbId),{estado:'aprobado',aprobadoPor,fechaAprobacion:new Date().toISOString()});showToast('Aprobada ✓','success');if(r)await enviarEmailAprobacion(r);}catch(e){showToast('Error','error');}
+};
+window.toggleReintegrado=async function(fbId,valor){
+  try{await updateDoc(doc(db,'rendiciones',fbId),{reintegrado:valor,fechaReintegro:valor?new Date().toISOString():null});showToast(valor?'Marcada como reintegrada ✓':'Desmarcada','success');}catch(e){showToast('Error','error');}
 };
 window.abrirConsulta=function(fbId){consultaTargetId=fbId;document.getElementById('consultaTexto').value='';document.getElementById('modalConsulta').classList.add('open');};
 window.closeModal=function(){document.getElementById('modalConsulta').classList.remove('open');consultaTargetId=null;};
@@ -626,7 +630,18 @@ window.exportarCSV=function(){
 };
 
 window.descargarPDFPorId=function(fbId){const r=todasRendiciones.find(x=>x.fbId===fbId);if(!r){showToast('No se encontró la rendición','error');return;}window.generarPDFRendicion(r);};
-window.generarPDFRendicion=function(r){
+async function urlAImagenDataURL(url){
+  try{
+    const resp=await fetch(url);
+    if(!resp.ok)return null;
+    const blob=await resp.blob();
+    if(!blob.type||!blob.type.startsWith('image/'))return null;
+    const dataUrl=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(blob);});
+    const formato=blob.type.includes('png')?'PNG':blob.type.includes('webp')?'WEBP':'JPEG';
+    return {dataUrl,formato};
+  }catch(e){return null;}
+}
+window.generarPDFRendicion=async function(r){
   const {jsPDF}=window.jspdf;
   const docu=new jsPDF({unit:'pt',format:'a4'});
   const margin=40; let y=48;
@@ -683,6 +698,34 @@ window.generarPDFRendicion=function(r){
   docu.setFont('helvetica','bold');docu.setFontSize(12);
   const totalTxt='TOTAL: $'+fmt(r.totalARS||0)+((r.totalUSD||0)>0?'  +  USD '+fmt(r.totalUSD):'');
   docu.text(totalTxt,margin,finalY);
+
+  // ---- Comprobantes (fotos de cada gasto + adjuntos globales legacy) ----
+  const comprobantes=[];
+  (r.gastos||[]).forEach(g=>{
+    const c=g.comprobante;
+    if(c&&(c.url||c.data))comprobantes.push({url:c.url||c.data,label:(g.desc||g.concepto||'Gasto')+' — '+formatDate(g.fecha)+(g.proveedor?' — '+g.proveedor:'')});
+  });
+  if(Array.isArray(r.adjuntos)){
+    r.adjuntos.forEach(a=>{if(a&&(a.url||a.data))comprobantes.push({url:a.url||a.data,label:a.name||'Adjunto'});});
+  }else if(r.adjunto&&(r.adjunto.url||r.adjunto.data)){
+    comprobantes.push({url:r.adjunto.url||r.adjunto.data,label:r.adjunto.name||'Adjunto'});
+  }
+  for(const comp of comprobantes){
+    const img=await urlAImagenDataURL(comp.url);
+    if(!img)continue; // se omiten PDFs u otros archivos que no son imagen, o si falla la descarga
+    docu.addPage();
+    const pw=docu.internal.pageSize.getWidth(),ph=docu.internal.pageSize.getHeight();
+    docu.setFont('helvetica','bold');docu.setFontSize(11);
+    docu.text('Comprobante — '+comp.label,margin,40,{maxWidth:pw-margin*2});
+    try{
+      const props=docu.getImageProperties(img.dataUrl);
+      const maxW=pw-margin*2,maxH=ph-90;
+      let w=props.width,h=props.height;
+      const ratio=Math.min(maxW/w,maxH/h,1);
+      w=w*ratio;h=h*ratio;
+      docu.addImage(img.dataUrl,img.formato,margin,60,w,h);
+    }catch(e){docu.setFont('helvetica','normal');docu.setFontSize(10);docu.text('No se pudo mostrar la imagen.',margin,70);}
+  }
 
   const nombreArchivo=(r.titular||'rendicion').replace(/[^\w]+/g,'_')+'_'+(r.tipo||'')+'_'+r.fbId.slice(0,6)+'.pdf';
   docu.save(nombreArchivo);
