@@ -178,6 +178,11 @@
           <option>Rodrigo Yoel Sabena</option><option>Tomas Alej Giuliani</option>
           <option>Matias Navarro</option><option>Jose I. Lobos</option>
         </select>
+        <select id="filtroReintegro" onchange="renderAdmin()" style="padding:7px 12px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:13px;background:white">
+          <option value="">💰 Todos (reintegro)</option>
+          <option value="no">Aprobadas — falta reintegrar</option>
+          <option value="si">Ya reintegradas</option>
+        </select>
       </div>
     </div>
     <div class="stats-row" id="statsRow"></div>
@@ -417,6 +422,7 @@ window.renderAdmin=function(){
   const filtroE=document.getElementById('filtroEstado').value;
   const filtroT=document.getElementById('filtroTitular').value;
   const filtroTipo=document.getElementById('filtroTipo').value;
+  const filtroR=document.getElementById('filtroReintegro').value;
   let filtradas=todasRendiciones;
   if(responsableActivo){
     const empN=empleadosNormalizados(responsableActivo);
@@ -425,6 +431,8 @@ window.renderAdmin=function(){
   if(filtroTipo)filtradas=filtradas.filter(r=>r.tipo===filtroTipo);
   if(filtroE)filtradas=filtradas.filter(r=>r.estado===filtroE);
   if(filtroT)filtradas=filtradas.filter(r=>r.titular===filtroT);
+  if(filtroR==='no')filtradas=filtradas.filter(r=>r.estado==='aprobado'&&!r.reintegrado);
+  if(filtroR==='si')filtradas=filtradas.filter(r=>r.estado==='aprobado'&&r.reintegrado);
 
   const total=todasRendiciones.length,pend=todasRendiciones.filter(r=>r.estado==='pendiente').length,
     apro=todasRendiciones.filter(r=>r.estado==='aprobado').length,cons=todasRendiciones.filter(r=>r.estado==='con consulta').length;
