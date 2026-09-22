@@ -643,13 +643,13 @@ window.descargarPDFPorId=function(fbId){const r=todasRendiciones.find(x=>x.fbId=
 async function urlAImagenDataURL(url){
   try{
     const resp=await fetch(url);
-    if(!resp.ok)return null;
+    if(!resp.ok)return {error:'No se pudo descargar el archivo (HTTP '+resp.status+').'};
     const blob=await resp.blob();
-    if(!blob.type||!blob.type.startsWith('image/'))return null;
+    if(!blob.type||!blob.type.startsWith('image/'))return {error:'El archivo adjunto no es una imagen (es '+(blob.type||'de tipo desconocido')+'), por eso no se puede mostrar en el PDF. Revisalo desde el link.'};
     const dataUrl=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(blob);});
     const formato=blob.type.includes('png')?'PNG':blob.type.includes('webp')?'WEBP':'JPEG';
     return {dataUrl,formato};
-  }catch(e){return null;}
+  }catch(e){return {error:'Error de red al descargar la imagen: '+String(e&&e.message||e)};}
 }
 window.generarPDFRendicion=async function(r){
   const {jsPDF}=window.jspdf;
@@ -722,11 +722,18 @@ window.generarPDFRendicion=async function(r){
   }
   for(const comp of comprobantes){
     const img=await urlAImagenDataURL(comp.url);
-    if(!img)continue; // se omiten PDFs u otros archivos que no son imagen, o si falla la descarga
     docu.addPage();
     const pw=docu.internal.pageSize.getWidth(),ph=docu.internal.pageSize.getHeight();
     docu.setFont('helvetica','bold');docu.setFontSize(11);
     docu.text('Comprobante — '+comp.label,margin,40,{maxWidth:pw-margin*2});
+    if(img.error){
+      docu.setFont('helvetica','normal');docu.setFontSize(10);docu.setTextColor(180,50,40);
+      docu.text('⚠ No se pudo incluir esta imagen en el PDF: '+img.error,margin,70,{maxWidth:pw-margin*2});
+      docu.setTextColor(0,0,0);docu.setFontSize(9);
+      docu.text('Ver manualmente en:',margin,95);
+      docu.textWithLink(comp.url,margin,110,{url:comp.url,maxWidth:pw-margin*2});
+      continue;
+    }
     try{
       const props=docu.getImageProperties(img.dataUrl);
       const maxW=pw-margin*2,maxH=ph-90;
@@ -734,7 +741,7 @@ window.generarPDFRendicion=async function(r){
       const ratio=Math.min(maxW/w,maxH/h,1);
       w=w*ratio;h=h*ratio;
       docu.addImage(img.dataUrl,img.formato,margin,60,w,h);
-    }catch(e){docu.setFont('helvetica','normal');docu.setFontSize(10);docu.text('No se pudo mostrar la imagen.',margin,70);}
+    }catch(e){docu.setFont('helvetica','normal');docu.setFontSize(10);docu.text('No se pudo mostrar la imagen: '+String(e&&e.message||e),margin,70,{maxWidth:pw-margin*2});}
   }
 
   const nombreArchivo=(r.titular||'rendicion').replace(/[^\w]+/g,'_')+'_'+(r.tipo||'')+'_'+r.fbId.slice(0,6)+'.pdf';
