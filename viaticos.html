@@ -321,7 +321,7 @@
         <p style="font-size:13px;color:var(--gray-600);margin-bottom:14px">Completá solo si usaste tu vehículo personal.</p>
         <div class="form-grid">
           <div class="form-group"><label>Kilómetros</label><input type="number" id="v_km" placeholder="0" min="0" oninput="calcKm()"></div>
-          <div class="form-group"><label>Valor por km (ARS)</label><input type="text" inputmode="decimal" id="v_valorKm" value="501,05" oninput="formatARInput(this);calcKm()"></div>
+          <div class="form-group"><label>Valor por km (ARS)</label><input type="text" inputmode="decimal" id="v_valorKm" value="599,13" oninput="formatARInput(this);calcKm()"></div>
         </div>
         <div id="kmResult" style="display:none;margin-top:12px;padding:10px 14px;background:var(--gray-50);border-radius:6px;border:1.5px solid var(--gray-200)">
           <span style="font-size:13px;color:var(--gray-600)">Importe por kilometraje: </span>
@@ -733,7 +733,7 @@ window.enviarViatico=async function(){
   const recibioEfectivo=document.getElementById('v_recibioEfectivo').value,
     importeEfectivo=recibioEfectivo==='Si'?(parseARNumber(document.getElementById('v_importeEfectivo').value)||0):0;
   if(!nombre){showToast('Ingresá tu nombre','error');return;}if(!area){showToast('Seleccioná el área','error');return;}if(!fechas){showToast('Ingresá las fechas','error');return;}if(!motivo){showToast('Ingresá el motivo del viaje','error');return;}if(!vGastos.length){showToast('Agregá al menos un gasto','error');return;}if(vAttachedFiles.some(f=>f.subiendo)){showToast('Esperá a que terminen de subir los archivos','error');return;}
-  const km=parseFloat(document.getElementById('v_km').value)||0,valorKm=parseARNumber(document.getElementById('v_valorKm').value)||501.05,kmImporte=km*valorKm;
+  const km=parseFloat(document.getElementById('v_km').value)||0,valorKm=parseARNumber(document.getElementById('v_valorKm').value)||599.13,kmImporte=km*valorKm;
   const totalARS=vGastos.reduce((s,g)=>s+g.importe,0)+kmImporte;
   document.getElementById('vBtnEnviar').disabled=true;document.getElementById('vSendingMsg').style.display='';
   try{
@@ -755,7 +755,7 @@ window.actualizarSaldoEfectivo=function(){
   const resultEl=document.getElementById('saldoEfectivoResult');
   if(recibio!=='Si'){resultEl.style.display='none';return;}
   const importeEfectivo=parseARNumber(document.getElementById('v_importeEfectivo').value)||0;
-  const km=parseFloat(document.getElementById('v_km').value)||0,valorKm=parseARNumber(document.getElementById('v_valorKm').value)||501.05;
+  const km=parseFloat(document.getElementById('v_km').value)||0,valorKm=parseARNumber(document.getElementById('v_valorKm').value)||599.13;
   const totalGastado=vGastos.reduce((s,g)=>s+g.importe,0)+(km*valorKm);
   const saldo=importeEfectivo-totalGastado;
   resultEl.style.display='';
